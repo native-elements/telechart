@@ -35,7 +35,7 @@
             background: #242f3e;
         }
         .telechart {
-            height: 600px;
+            margin-bottom: 50px;
         }
         .selectChartData {
             float: right;
@@ -54,6 +54,13 @@
             border-radius: 15px;
             padding: 0 10px;
         }
+        .sourceLink {
+            text-align: center;
+            font-size: 10px;
+        }
+        .sourceLink a {
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -62,6 +69,8 @@
         <select id=dataSelect name=dataSelect onchange="telechart.data = chartData[this.value]"></select>
     </div>
     <h1>Followers</h1>
+    <div id="telechartDiv"></div>
+    <div class="sourceLink"><a href="./sources.tar.gz">Download sources</a></div>
     <script src="chart_data.js"></script>
     <script src="telechart.min.js"></script>
     <script>
@@ -71,7 +80,7 @@
             option.value = n
             option.innerText = 'Chart #' + n
         }
-        var el = document.body.appendChild(document.createElement('DIV'))
+        var el = document.getElementById('telechartDiv')
         var telechart = Telechart.init(el, { data: chartData[select.value], height: 450 })
         function switchTheme() {
             telechart.theme = telechart.theme === 'light' ? 'dark' : 'light'
