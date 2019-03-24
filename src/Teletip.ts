@@ -7,18 +7,18 @@ export class Teletip {
 
     constructor(protected readonly telechart: Telechart, parentElement: HTMLElement) {
         this.theme = telechart.theme
-        this.element = document.createElement('div')
-        this.element.classList.add('telechart-tip')
-        this.element.style.position = 'absolute'
-        this.element.style.border = `${this.config.borderColor} 1px solid`
-        this.element.style.background = this.config.backgroundColor
-        this.element.style.boxShadow = '1px 1px 4px rgba(0, 0, 0, .1)'
-        this.element.style.borderRadius = `10px`
-        this.element.style.transition = '.1s'
-        this.element.style.padding = `7px 12px`
-        this.element.style.whiteSpace = 'nowrap'
-        this.element.style.fontSize = `13px`
-        this.element.style.color = this.config.color
+        const element = this.element = document.createElement('div')
+        element.classList.add('telechart-tip')
+        element.style.position = 'absolute'
+        element.style.border = `${this.config.borderColor} 1px solid`
+        element.style.background = this.config.backgroundColor
+        element.style.boxShadow = '1px 1px 4px rgba(0, 0, 0, .1)'
+        element.style.borderRadius = `10px`
+        element.style.transition = '.1s'
+        element.style.padding = `7px 12px`
+        element.style.whiteSpace = 'nowrap'
+        element.style.fontSize = `13px`
+        element.style.color = this.config.color
         this.hide()
         parentElement.appendChild(this.element)
     }

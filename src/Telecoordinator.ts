@@ -22,6 +22,7 @@ export class Telecoordinator extends AbstractCoordinator {
         this.bottomPadding = 40 + telechart.telemap.height
         this.telecanvas.addMouseMoveListener(this.onMouseMove.bind(this))
         this.theme = telechart.theme
+        this.initHTML()
     }
 
     get theme() {
@@ -84,7 +85,8 @@ export class Telecoordinator extends AbstractCoordinator {
                 const date = new Date(m.x)
                 const month = date.getMonth()
                 if (!this.cache.months[month]) {
-                    this.cache.months[month] = date.toLocaleDateString(undefined, { month: 'short' })
+                    const str = date.toLocaleDateString(undefined, { month: 'short' })
+                    this.cache.months[month] = str.length > 3 ? str.substr(0, 3) : str
                 }
                 m.title = `${this.cache.months[month]} ${date.getDate()}`
             }
@@ -191,6 +193,40 @@ export class Telecoordinator extends AbstractCoordinator {
     protected onMouseMove(x: number, y: number) {
         const val = this.getXValue(x)
         this.columns.forEach(c => c.setCurrentX(val))
+    }
+
+    protected initHTML() {
+        let x = 0
+        let beginX: number|null = null
+        let beginRange: { from: number, to: number }|null = null
+        const mouseMove = (clientX: number) => {
+            x = clientX
+            if (beginX && beginRange) {
+                const map = this.telechart.telemap
+                const range = map.range!
+                const movementPercent = (x - beginX) / this.telecanvas.width * (range.from - range.to)
+                const newRange = { from: beginRange.from + movementPercent, to: beginRange.to + movementPercent }
+
+                if (newRange.from < 0) {
+                    newRange.from = 0
+                    newRange.to = beginRange.to - beginRange.from
+                }
+                if (newRange.to > 1) {
+                    newRange.to = 1
+                    newRange.from = 1 - beginRange.to + beginRange.from
+                }
+                map.range = newRange
+            }
+        }
+        window.addEventListener('touchmove', e => mouseMove(e.touches[0].clientX))
+        window.addEventListener('mousemove', (e) => mouseMove(e.clientX))
+        this.telecanvas.addMouseDownListener((xPos) => {
+            beginX = xPos
+            beginRange = { ...this.telechart.telemap.range! }
+        })
+        this.telecanvas.addMouseUpListener(() => {
+            beginX = null
+        })
     }
 
 }

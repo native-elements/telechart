@@ -13,7 +13,6 @@ export class Telegend {
     constructor(protected telechart: Telechart, parentElement: HTMLElement) {
         this.element = document.createElement('div')
         this.element.classList.add('telegend')
-        this.element.style.marginTop = '15px'
         this.element.style.color = this.config.textColor
         parentElement.appendChild(this.element)
     }
@@ -48,7 +47,7 @@ export class Telegend {
         element.style.borderRadius = '100px'
         element.style.padding = '7px 15px 7px 8px'
         element.style.cursor = 'pointer'
-        element.style.marginRight = `13px`
+        element.style.margin = `15px 13px 0 0`
         this.element.appendChild(element)
 
         const checkbox = document.createElement('div')

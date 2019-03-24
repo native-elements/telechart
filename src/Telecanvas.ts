@@ -3,6 +3,8 @@ type MouseMoveListener = (x: number, y: number) => void
 
 export class Telecanvas {
     private mouseMoveListeners: MouseMoveListener[] = []
+    private mouseDownListeners: Array<(x: number, y: number) => void> = []
+    private mouseUpListeners: Array<() => void> = []
     private canvas: HTMLCanvasElement
     private context: CanvasRenderingContext2D
 
@@ -18,7 +20,22 @@ export class Telecanvas {
             this.canvas.style.width = '100%'
             this.context.scale(getCtr(), getCtr())
         })
-        this.canvas.addEventListener('mousemove', (e) => this.mouseMoveListeners.forEach(callback => callback(e.offsetX, e.offsetY)))
+
+        let x = 0
+        let y = 0
+        this.canvas.addEventListener('mousemove', (e) => {
+            x = e.clientX
+            y = e.clientY
+            this.mouseMoveListeners.forEach(callback => callback(e.offsetX, e.offsetY))
+        })
+        this.canvas.addEventListener('mousedown', () => this.mouseDownListeners.forEach(callback => callback()))
+        this.canvas.addEventListener('touchstart', (e) => {
+            x = e.touches[0].pageX
+            y = e.touches[0].pageY
+            this.mouseDownListeners.forEach(callback => callback(x, y))
+        })
+        this.canvas.addEventListener('mouseup', () => this.mouseUpListeners.forEach(callback => callback()))
+        this.canvas.addEventListener('touchend', () => this.mouseUpListeners.forEach(callback => callback()))
     }
 
     get width() {
@@ -98,6 +115,14 @@ export class Telecanvas {
 
     public addMouseMoveListener(callback: (x: number, y: number) => void) {
         this.mouseMoveListeners.push(callback)
+    }
+
+    public addMouseDownListener(callback: (x: number, y: number) => void) {
+        this.mouseDownListeners.push(callback)
+    }
+
+    public addMouseUpListener(callback: () => void) {
+        this.mouseUpListeners.push(callback)
     }
 
 }
