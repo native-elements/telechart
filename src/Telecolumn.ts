@@ -161,7 +161,11 @@ export class Telecolumn {
             }
         }
         if (this.visible) {
-            c.path(this.values.map(v => [m.getCanvasX(v.x), m.getCanvasY(v.y)] as [number, number]), this.color, this.width / 2)
+            c.path(this.values
+                .filter((v, i) => this.values.length > 130 ? i % 2 === 0 : true)
+                .map(v => [m.getCanvasX(v.x), m.getCanvasY(v.y)] as [number, number]),
+                this.color, this.width / 2,
+            )
         }
     }
 

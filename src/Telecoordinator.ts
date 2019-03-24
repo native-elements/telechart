@@ -127,10 +127,15 @@ export class Telecoordinator extends AbstractCoordinator {
             return { name: col.name, color: col.color, value: col.currentPoint!.y }
         })
         if (columns.length) {
-            const date = new Date(curColummns[0]!.currentPoint!.x)
-            this.telechart.teletip.setContent({ title: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }), values: columns })
-            this.telechart.teletip.setCoordinates([this.getCanvasX(curColummns[0]!.currentPoint!.x), 0])
-            this.telechart.teletip.show()
+            const pos = this.getCanvasX(curColummns[0]!.currentPoint!.x)
+            if (pos < 0 || pos > this.telecanvas.width) {
+                this.telechart.teletip.hide()
+            } else {
+                const date = new Date(curColummns[0]!.currentPoint!.x)
+                this.telechart.teletip.setContent({ title: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }), values: columns })
+                this.telechart.teletip.setCoordinates([this.getCanvasX(curColummns[0]!.currentPoint!.x), 0])
+                this.telechart.teletip.show()
+            }
         } else {
             this.telechart.teletip.hide()
         }
