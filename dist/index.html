@@ -37,23 +37,6 @@
         .telechart {
             margin-bottom: 50px;
         }
-        .selectChartData {
-            float: right;
-            margin-top: -3px;
-        }
-        .selectChartData label {
-            display: inline-block;
-            padding-top: 7px;
-            margin-right: 8px;
-        }
-        .selectChartData select {
-            background: #eee;
-            float: right;
-            height: 32px;
-            border: 1px #ccc solid;
-            border-radius: 15px;
-            padding: 0 10px;
-        }
         .sourceLink {
             text-align: center;
             font-size: 10px;
@@ -64,28 +47,28 @@
     </style>
 </head>
 <body>
-    <div class=selectChartData>
-        <label for=dataSelect>Select data: </label>
-        <select id=dataSelect name=dataSelect onchange="telechart.data = chartData[this.value]"></select>
+    <div id="charts">
+
     </div>
-    <h1>Followers</h1>
     <div id="telechartDiv"></div>
+    
     <div class="sourceLink"><a href="./sources.tar.gz">Download sources</a></div>
     <script src="chart_data.js"></script>
     <script src="telechart.min.js"></script>
     <script>
-        var select = document.getElementById('dataSelect')
+        var telecharts = []
         for (var n = 0; n < chartData.length; n++) {
-            var option = select.appendChild(document.createElement('option'))
-            option.value = n
-            option.innerText = 'Chart #' + n
+            var chart = document.createElement('div')
+            chart.classList.add('chart')
+            chart.innerHTML = '<h1>Chart #' + n + '</h1><div class="chartWrp" id="chart' + n + '"></div>'
+            document.getElementById('telechartDiv').appendChild(chart)
+            telecharts.push(Telechart.init(document.getElementById('chart' + n), { data: chartData[n] }))
         }
-        var el = document.getElementById('telechartDiv')
-        var telechart = Telechart.init(el, { data: chartData[select.value], height: 450 })
         function switchTheme() {
-            telechart.theme = telechart.theme === 'light' ? 'dark' : 'light'
-            document.body.classList.toggle('dark', telechart.theme === 'dark')
-            document.getElementById('themeSwitch').innerText = telechart.theme === 'light' ? 'Switch to Night Mode' : 'Back to Light Mode'
+            var theme = document.body.classList.contains('dark') ? 'light' : 'dark'
+            document.body.classList.toggle('dark', theme === 'dark')
+            telecharts.forEach(tc => tc.theme = theme)
+            document.getElementById('themeSwitch').innerText = theme === 'light' ? 'Switch to Night Mode' : 'Back to Light Mode'
         }
     </script>
     <div id=themeSwitch onclick="switchTheme()">Switch to Night Mode</div>
