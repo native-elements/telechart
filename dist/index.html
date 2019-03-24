@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Telechart Example</title>
+    <style>
+        body {
+            margin: 12px;
+            font-family: sans-serif;
+            padding-bottom: 100px;
+            padding-top: 5px;
+        }
+        body.dark {
+            background: #242f3e;
+            color: #fff;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+        #themeSwitch {
+            background: #fff;
+            position: fixed;
+            font-size: 22px;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            color: #108be3;
+            text-align: center;
+            padding: 34px 0;
+            cursor: pointer;
+        }
+        body.dark #themeSwitch {
+            background: #242f3e;
+        }
+        .telechart {
+            height: 600px;
+        }
+        .selectChartData {
+            float: right;
+            margin-top: -3px;
+        }
+        .selectChartData label {
+            display: inline-block;
+            padding-top: 7px;
+            margin-right: 8px;
+        }
+        .selectChartData select {
+            background: #eee;
+            float: right;
+            height: 32px;
+            border: 1px #ccc solid;
+            border-radius: 15px;
+            padding: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class=selectChartData>
+        <label for=dataSelect>Select data: </label>
+        <select id=dataSelect name=dataSelect onchange="telechart.data = chartData[this.value]"></select>
+    </div>
+    <h1>Followers</h1>
+    <script src="chart_data.js"></script>
+    <script src="telechart.min.js"></script>
+    <script>
+        var select = document.getElementById('dataSelect')
+        for (var n = 0; n < chartData.length; n++) {
+            var option = select.appendChild(document.createElement('option'))
+            option.value = n
+            option.innerText = 'Chart #' + n
+        }
+        var el = document.body.appendChild(document.createElement('DIV'))
+        var telechart = Telechart.init(el, { data: chartData[select.value], height: 450 })
+        function switchTheme() {
+            telechart.theme = telechart.theme === 'light' ? 'dark' : 'light'
+            document.body.classList.toggle('dark', telechart.theme === 'dark')
+            document.getElementById('themeSwitch').innerText = telechart.theme === 'light' ? 'Switch to Night Mode' : 'Back to Light Mode'
+        }
+    </script>
+    <div id=themeSwitch onclick="switchTheme()">Switch to Night Mode</div>
+</body>
+</html>

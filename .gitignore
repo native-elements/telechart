@@ -1,6 +1,6 @@
 .idea
 .code
-dist/
+dist/*
 !dist/index.html
 !dist/chart_data.js
 node_modules
