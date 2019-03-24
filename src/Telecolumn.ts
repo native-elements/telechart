@@ -146,14 +146,18 @@ export class Telecolumn {
             const allVals = this.values
                 .map(v => [t.getCanvasX(v.x), t.getCanvasY(v.y)] as [number, number])
                 .filter(v => v[0] >= -50 && v[0] <= c.width + 50)
-            const nextRedraw = !!this.visibleAnimationStep
-            let opacity: number|string = this.visibleAnimationStep ? (this.visibleAnimationStep--) / this.animationSteps : 0
-            opacity = this.visible ? 1 - opacity : opacity
-            opacity = Math.round(opacity * 255).toString(16)
-            opacity = opacity.length < 2 ? '0' + opacity : opacity
-            c.path(allVals, this.color + opacity, this.width)
-            if (nextRedraw) {
-                this.telechart.redraw()
+            if (allVals.length) {
+                const nextRedraw = !!this.visibleAnimationStep
+                let opacity: number|string = this.visibleAnimationStep ? (this.visibleAnimationStep--) / this.animationSteps : 0
+                opacity = this.visible ? 1 - opacity : opacity
+                if (opacity) {
+                    opacity = Math.round(opacity * 255).toString(16)
+                    opacity = opacity.length < 2 ? '0' + opacity : opacity
+                    c.path(allVals, this.color + opacity, this.width)
+                    if (nextRedraw) {
+                        this.telechart.redraw()
+                    }
+                }
             }
         }
         if (this.visible) {

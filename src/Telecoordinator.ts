@@ -113,7 +113,6 @@ export class Telecoordinator extends AbstractCoordinator {
             const y = this.getCanvasY(g.y)
             let opacity: string = Math.round(g.old ? --g.old / 10 * 255 : 255).toString(16)
             if (g.old === 0) {
-                console.log(g.old)
                 this.guides.splice(n, 1)
             }
             opacity = opacity.length < 2 ? '0' + opacity : opacity
@@ -138,6 +137,9 @@ export class Telecoordinator extends AbstractCoordinator {
     }
 
     public recalcBorders(iterations = 10) {
+        if (!this.columns.filter(c => c.visible).length) {
+            return
+        }
         if (!this.animate) {
             super.recalcBorders()
             this.recalcGuides()
