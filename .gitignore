@@ -1,0 +1,7 @@
+.idea
+.code
+dist/
+!dist/index.html
+!dist/chart_data.js
+node_modules
+package-lock.json

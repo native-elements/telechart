@@ -1,0 +1,22 @@
+{
+    "name": "telechart",
+    "version": "0.0.1",
+    "description": "",
+    "scripts": {
+        "build": "webpack --config webpack.prod.js",
+        "watch": "webpack -w --config webpack.dev.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Valery Shibanov",
+    "license": "MIT",
+    "dependencies": {},
+    "devDependencies": {
+        "css-loader": "^2.1.1",
+        "mini-css-extract-plugin": "^0.5.0",
+        "ts-loader": "^5.3.3",
+        "typescript": "^3.3.3333",
+        "webpack": "^4.29.6",
+        "webpack-cli": "^3.2.3",
+        "webpack-merge": "^4.2.1"
+    }
+}
