@@ -58,11 +58,13 @@
     <script>
         var telecharts = []
         for (var n = 0; n < chartData.length; n++) {
-            var chart = document.createElement('div')
-            chart.classList.add('chart')
-            chart.innerHTML = '<h1>Chart #' + n + '</h1><div class="chartWrp" id="chart' + n + '"></div>'
-            document.getElementById('telechartDiv').appendChild(chart)
-            telecharts.push(Telechart.init(document.getElementById('chart' + n), { data: chartData[n] }))
+            setTimeout(((n) => {
+                var chart = document.createElement('div')
+                chart.classList.add('chart')
+                chart.innerHTML = '<h1>Chart #' + n + '</h1><div class="chartWrp" id="chart' + n + '"></div>'
+                document.getElementById('telechartDiv').appendChild(chart)
+                telecharts.push(Telechart.init(document.getElementById('chart' + n), { data: chartData[n] }))
+            }).bind(null, n), 10 + 10 * n)
         }
         function switchTheme() {
             var theme = document.body.classList.contains('dark') ? 'light' : 'dark'
