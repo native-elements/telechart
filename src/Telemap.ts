@@ -5,8 +5,7 @@ import { Telecolumn } from './Telecolumn'
 export class Telemap extends AbstractCoordinator {
     protected config!: { rangeBackground: string, rangeFill: string, shadow: string }
     protected element!: HTMLElement
-    protected leftGripper!: HTMLElement
-    protected rightGripper!: HTMLElement
+    protected display!: HTMLElement
     protected rangeProperty: { from: number, to: number }|null = null
     protected bottomPadding = 5
     private themeProperty: 'light'|'dark' = 'light'
@@ -62,8 +61,8 @@ export class Telemap extends AbstractCoordinator {
             this.rangeProperty!.from * this.telecanvas.width + 4, this.topPadding - 4,
             (this.rangeProperty!.to - this.rangeProperty!.from) * this.telecanvas.width - 8, this.height + 3, this.config.rangeFill,
         )
-        this.element.style.left = `${this.rangeProperty!.from * this.telecanvas.width}px`
-        this.element.style.width = `${(this.rangeProperty!.to - this.rangeProperty!.from) * this.telecanvas.width}px`
+        this.display.style.left = `${this.rangeProperty!.from * this.telecanvas.width}px`
+        this.display.style.width = `${(this.rangeProperty!.to - this.rangeProperty!.from) * this.telecanvas.width}px`
     }
 
     public postDraw() {
@@ -90,31 +89,39 @@ export class Telemap extends AbstractCoordinator {
 
     protected initHTML(parentElement: HTMLElement) {
         const element = this.element = document.createElement('div')
-        element.classList.add('telechart-map-elt')
+        element.classList.add('telechart-map')
         element.style.position = 'absolute'
         element.style.height = `${this.height + 5}px`
         element.style.bottom = '0'
-        element.style.cursor = 'ew-resize'
+        element.style.left = '0'
+        element.style.right = '0'
+        parentElement.appendChild(element)
 
-        const leftGripper = this.leftGripper = document.createElement('div')
+        const display = this.display = document.createElement('div')
+        display.classList.add('telechart-map-elt')
+        display.style.position = 'absolute'
+        display.style.height = '100%'
+        display.style.top = '0'
+        display.style.cursor = 'move'
+        element.append(display)
+
+        const leftGripper = document.createElement('div')
         leftGripper.classList.add('telechart-map-left-gripper')
         leftGripper.style.position = 'absolute'
         leftGripper.style.left = '-10px'
         leftGripper.style.top = '0'
         leftGripper.style.width = '25px'
         leftGripper.style.height = '100%'
+        display.appendChild(leftGripper)
 
-        const rightGripper = this.rightGripper = document.createElement('div')
+        const rightGripper = document.createElement('div')
         rightGripper.classList.add('telechart-map-right-gripper')
         rightGripper.style.position = 'absolute'
         rightGripper.style.right = '-10px'
         rightGripper.style.top = '0'
         rightGripper.style.width = '25px'
         rightGripper.style.height = '100%'
-
-        this.element.appendChild(this.leftGripper)
-        this.element.appendChild(this.rightGripper)
-        parentElement.appendChild(this.element)
+        display.appendChild(rightGripper)
 
         let currentPos = { left: 0, top: 0 }
         let startRange: { from: number, to: number }|null = null
@@ -174,36 +181,61 @@ export class Telemap extends AbstractCoordinator {
             startPos = null
             startRange = null
         }
+        const elementDown = (x: number, y: number) => {
+            const left = (x - element.getBoundingClientRect().left) / this.telecanvas.width - (this.range!.to - this.range!.from) / 2
+            const newRange = { from: left, to: left + this.range!.to - this.range!.from }
+            if (newRange.from < 0) {
+                newRange.from = 0
+                newRange.to = this.range!.to - this.range!.from
+            }
+            if (newRange.to > 1) {
+                newRange.to = 1
+                newRange.from = 1 - this.range!.to + this.range!.from
+            }
+            this.range = newRange
+            mousemove(x, y)
+            mousedown()
+        }
         window.addEventListener('touchmove', e => mousemove(e.touches[0].clientX, e.touches[0].clientY))
         window.addEventListener('mousemove', e => mousemove(e.clientX, e.clientY))
-        this.element.addEventListener('touchstart', e => {
-            mousemove(e.touches[0].pageX, e.touches[0].pageY)
+        display.addEventListener('touchstart', e => {
+            mousemove(e.touches[0].clientX, e.touches[0].clientY)
             mousedown()
             return false
         })
-        this.leftGripper.addEventListener('touchstart', e => {
+        leftGripper.addEventListener('touchstart', e => {
             mousemove(e.touches[0].clientX, e.touches[0].clientY)
             mousedown('from')
             e.stopPropagation()
             return false
         })
-        this.leftGripper.addEventListener('mousedown', e => {
+        leftGripper.addEventListener('mousedown', e => {
             mousedown('from')
             e.stopPropagation()
             return false
         })
-        this.rightGripper.addEventListener('mousedown', e => {
+        rightGripper.addEventListener('mousedown', e => {
             mousedown('to')
             e.stopPropagation()
             return false
         })
-        this.rightGripper.addEventListener('touchstart', e => {
+        rightGripper.addEventListener('touchstart', e => {
             mousemove(e.touches[0].clientX, e.touches[0].clientY)
             mousedown('to')
             e.stopPropagation()
             return false
         })
-        this.element.addEventListener('mousedown', () => mousedown())
+        element.addEventListener('touchstart', (e) => {
+            elementDown(e.touches[0].clientX, e.touches[0].clientY)
+            e.stopPropagation()
+            return false
+        })
+        element.addEventListener('mousedown', (e) => {
+            elementDown(e.clientX, e.clientY)
+            e.stopPropagation()
+            return false
+        })
+        display.addEventListener('mousedown', () => mousedown())
         window.addEventListener('touchend', mouseup)
         window.addEventListener('mouseup', mouseup)
     }

@@ -1,6 +1,6 @@
 import { Telecolumn } from './Telecolumn'
 import { Telechart } from './Telechart'
-import { AbstractCoordinator } from './AbstractCoordinator'
+import { AbstractCoordinator, IBorders } from './AbstractCoordinator'
 
 export class Telecoordinator extends AbstractCoordinator {
     public animate = false
@@ -8,7 +8,7 @@ export class Telecoordinator extends AbstractCoordinator {
     protected topPadding: number
     protected bottomPadding: number
     protected columns: Telecolumn[] = []
-    private guides: Array<{ y: number, title: string }> = []
+    private guides: Array<{ y: number, title: string, old?: number }> = []
     private milestones: Array<{ x: number, title: string|null }> = []
     private interval: number|null = null
     private timeout: number|null = null
@@ -108,11 +108,18 @@ export class Telecoordinator extends AbstractCoordinator {
             color = color.length < 2 ? '0' + color : color
             c.text(m.title!, [x, c.height - this.bottomPadding + 18], cfg.axisTextColor + color, undefined, 11, 'center')
         })
-        this.guides.forEach(g => {
+        for (let n = this.guides.length - 1; n >= 0; n--) {
+            const g = this.guides[n]
             const y = this.getCanvasY(g.y)
-            c.line([0, y], [c.width, y], cfg.axisColor, 1)
-            c.text(g.title, [0, y - 6], cfg.axisTextColor, undefined, 11)
-        })
+            let opacity: string = Math.round(g.old ? --g.old / 10 * 255 : 255).toString(16)
+            if (g.old === 0) {
+                console.log(g.old)
+                this.guides.splice(n, 1)
+            }
+            opacity = opacity.length < 2 ? '0' + opacity : opacity
+            c.line([0, y], [c.width, y], cfg.axisColor + opacity, 1)
+            c.text(g.title, [0, y - 6], cfg.axisTextColor + opacity, undefined, 11)
+        }
     }
 
     public postDraw() {
@@ -148,7 +155,7 @@ export class Telecoordinator extends AbstractCoordinator {
             const initialBorders = this.borders
             super.recalcBorders()
             const targetBorders = this.borders
-            this.recalcGuides()
+            this.recalcGuides(true)
 
             if (this.interval) {
                 clearInterval(this.interval)
@@ -162,6 +169,7 @@ export class Telecoordinator extends AbstractCoordinator {
                 this.telechart.redraw()
                 if (++iteration === iterations) {
                     this.borders = targetBorders
+                    this.guides = this.guides.filter(g => g.old === undefined)
                     clearInterval(this.interval!)
                     this.interval = null
                 }
@@ -171,9 +179,17 @@ export class Telecoordinator extends AbstractCoordinator {
         }, 50)
     }
 
-    protected recalcGuides() {
+    protected recalcGuides(animateOld: boolean = false) {
         const c = this.telecanvas
-        this.guides = []
+        if (!animateOld) {
+            this.guides = []
+        } else {
+            this.guides.forEach(g => {
+                if (g.old === undefined) {
+                    g.old = 6
+                }
+            })
+        }
         for (let n = 0; n < 6; n++) {
             const y = this.getYValue(c.height - this.bottomPadding - (c.height - this.bottomPadding - this.topPadding) / 6 * n)
             const title = n === 0 ? '0' : String(y - y % Math.pow(10, y.toString().length - 2))
@@ -219,7 +235,7 @@ export class Telecoordinator extends AbstractCoordinator {
             }
         }
         window.addEventListener('touchmove', e => mouseMove(e.touches[0].clientX))
-        window.addEventListener('mousemove', (e) => mouseMove(e.clientX))
+        window.addEventListener('mousemove', e => mouseMove(e.clientX))
         this.telecanvas.addMouseDownListener((xPos) => {
             beginX = xPos
             beginRange = { ...this.telechart.telemap.range! }

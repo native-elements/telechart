@@ -1,12 +1,19 @@
 import { Telechart } from './Telechart'
 import { Telecolumn } from './Telecolumn'
 
+export interface IBorders {
+    maxX: number,
+    maxY: number,
+    minX: number,
+    minY: number,
+}
+
 export abstract class AbstractCoordinator {
     protected currentRangeDisplay = false
     protected abstract readonly topPadding: number
     protected abstract readonly bottomPadding: number
     protected columns: Telecolumn[] = []
-    protected borders!: { maxX: number, maxY: number, minX: number, minY: number }
+    protected borders!: IBorders
 
     constructor(protected readonly telechart: Telechart) {}
 

@@ -28,10 +28,10 @@ export class Telecanvas {
             y = e.clientY
             this.mouseMoveListeners.forEach(callback => callback(e.offsetX, e.offsetY))
         })
-        this.canvas.addEventListener('mousedown', () => this.mouseDownListeners.forEach(callback => callback()))
+        this.canvas.addEventListener('mousedown', () => this.mouseDownListeners.forEach(callback => callback(x, y)))
         this.canvas.addEventListener('touchstart', (e) => {
-            x = e.touches[0].pageX
-            y = e.touches[0].pageY
+            x = e.touches[0].clientX
+            y = e.touches[0].clientX
             this.mouseDownListeners.forEach(callback => callback(x, y))
         })
         this.canvas.addEventListener('mouseup', () => this.mouseUpListeners.forEach(callback => callback()))
