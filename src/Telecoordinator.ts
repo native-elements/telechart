@@ -180,7 +180,7 @@ export class Telecoordinator extends AbstractCoordinator {
                     this.interval = null
                 }
             }
-            this.interval = setInterval(intervalFunc, 10)
+            this.interval = setInterval(intervalFunc, 1000 / 30)
             intervalFunc()
         }, 50)
     }
