@@ -172,6 +172,7 @@ export class Telecoordinator extends AbstractCoordinator {
             }
         }
         this.interval = setInterval(intervalFunc, 10)
+        intervalFunc()
     }
 
     protected recalcGuides(animateOld: boolean = false) {
