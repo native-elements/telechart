@@ -79,7 +79,7 @@ export class Telemap extends AbstractCoordinator {
             this.borders.minX + (this.borders.maxX - this.borders.minX) * value!.from,
             this.borders.minX + (this.borders.maxX - this.borders.minX) * value!.to,
         ))
-        this.telechart.telecoordinator.recalcBorders()
+        this.telechart.telecoordinator.recalcBorders(300)
     }
 
     get range(): { from: number, to: number }|null {
