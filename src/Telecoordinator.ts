@@ -11,7 +11,6 @@ export class Telecoordinator extends AbstractCoordinator {
     private guides: Array<{ y: number, title: string, old?: number }> = []
     private milestones: Array<{ x: number, title: string|null }> = []
     private interval: number|null = null
-    private timeout: number|null = null
     private themeProperty: 'light'|'dark' = 'light'
     private cache = { months: {} as any }
 
@@ -173,7 +172,6 @@ export class Telecoordinator extends AbstractCoordinator {
             }
         }
         this.interval = setInterval(intervalFunc, 10)
-        intervalFunc()
     }
 
     protected recalcGuides(animateOld: boolean = false) {
