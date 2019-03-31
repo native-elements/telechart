@@ -140,7 +140,7 @@ export class Telecoordinator extends AbstractCoordinator {
         }
     }
 
-    public recalcBorders(iterations = 10) {
+    public recalcBorders(duration = 100) {
         if (!this.columns.filter(c => c.visible).length) {
             return
         }
@@ -149,40 +149,31 @@ export class Telecoordinator extends AbstractCoordinator {
             this.recalcGuides()
             return
         }
-        if (this.timeout) {
-            clearTimeout(this.timeout)
-            this.timeout = null
-        }
+        const initialBorders = this.borders
+        super.recalcBorders()
+        const targetBorders = this.borders
+        this.recalcGuides(true)
+
         if (this.interval) {
             clearInterval(this.interval)
             this.interval = null
         }
-        setTimeout(() => {
-            const initialBorders = this.borders
-            super.recalcBorders()
-            const targetBorders = this.borders
-            this.recalcGuides(true)
-
-            if (this.interval) {
-                clearInterval(this.interval)
+        const startTime = Date.now()
+        const getVal = ((key: 'minX'|'maxX'|'minY'|'maxY') => {
+            return Math.round(initialBorders[key] + (targetBorders[key] - initialBorders[key]) * (Date.now() - startTime) / duration)
+        })
+        const intervalFunc = () => {
+            this.borders = { minX: getVal('minX'), maxX: getVal('maxX'), minY: getVal('minY'), maxY: getVal('maxY') }
+            this.telechart.redraw()
+            if (Date.now() > startTime + duration) {
+                this.borders = targetBorders
+                this.guides = this.guides.filter(g => g.old === undefined)
+                clearInterval(this.interval!)
                 this.interval = null
             }
-            let iteration = 0
-            const getVal = ((key: 'minX'|'maxX'|'minY'|'maxY') => Math.round(initialBorders[key] + (targetBorders[key] - initialBorders[key]) / iterations * iteration))
-            const intervalFunc = () => {
-                iteration++
-                this.borders = { minX: getVal('minX'), maxX: getVal('maxX'), minY: getVal('minY'), maxY: getVal('maxY') }
-                this.telechart.redraw()
-                if (++iteration === iterations) {
-                    this.borders = targetBorders
-                    this.guides = this.guides.filter(g => g.old === undefined)
-                    clearInterval(this.interval!)
-                    this.interval = null
-                }
-            }
-            this.interval = setInterval(intervalFunc, 1000 / 30)
-            intervalFunc()
-        }, 50)
+        }
+        this.interval = setInterval(intervalFunc, 10)
+        intervalFunc()
     }
 
     protected recalcGuides(animateOld: boolean = false) {

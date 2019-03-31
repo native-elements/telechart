@@ -98,7 +98,7 @@ export class Telegend {
             }
             checkbox.style.border = `${telecolumn.color} ${telecolumn.visible ? 11 : 2}px solid`
             setTimeout(() => {
-                this.telechart.telecoordinator.recalcBorders(30)
+                this.telechart.telecoordinator.recalcBorders(400)
                 this.telechart.redraw()
             }, 10)
         })
