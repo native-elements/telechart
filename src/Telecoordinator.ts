@@ -152,6 +152,9 @@ export class Telecoordinator extends AbstractCoordinator {
         super.recalcBorders()
         const targetBorders = this.borders
         this.recalcGuides(true)
+        if (initialBorders.maxY === targetBorders.maxY) {
+            return
+        }
 
         if (this.interval) {
             clearInterval(this.interval)
@@ -162,7 +165,7 @@ export class Telecoordinator extends AbstractCoordinator {
             return Math.round(initialBorders[key] + (targetBorders[key] - initialBorders[key]) * (Date.now() - startTime) / duration)
         })
         const intervalFunc = () => {
-            this.borders = { minX: getVal('minX'), maxX: getVal('maxX'), minY: getVal('minY'), maxY: getVal('maxY') }
+            this.borders = { minX: targetBorders.minX, maxX: targetBorders.maxX, minY: getVal('minY'), maxY: getVal('maxY') }
             this.telechart.redraw()
             if (Date.now() > startTime + duration) {
                 this.borders = targetBorders
