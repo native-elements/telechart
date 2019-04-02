@@ -22,21 +22,21 @@ export abstract class AbstractCoordinator {
     }
 
     public getXValue(canvasX: number) {
-        return Math.round((this.borders.maxX - this.borders.minX) * canvasX / this.telecanvas.width + this.borders.minX)
+        return (this.borders.maxX - this.borders.minX) * canvasX / this.telecanvas.width + this.borders.minX
     }
 
     public getYValue(canvasY: number) {
         const tHeight = this.telecanvas.height - (this.bottomPadding + this.topPadding)
-        return Math.round((this.topPadding - canvasY) * (this.borders.maxY - this.borders.minY) / tHeight + this.borders.maxY)
+        return (this.topPadding - canvasY) * (this.borders.maxY - this.borders.minY) / tHeight + this.borders.maxY
     }
 
     public getCanvasX(value: number) {
-        return Math.round((value - this.borders.minX) / (this.borders.maxX - this.borders.minX) * this.telecanvas.width)
+        return (value - this.borders.minX) / (this.borders.maxX - this.borders.minX) * this.telecanvas.width
     }
 
     public getCanvasY(value: number) {
         const tHeight = this.telecanvas.height - (this.bottomPadding + this.topPadding)
-        return Math.round(tHeight - (value - this.borders.minY) / (this.borders.maxY - this.borders.minY) * tHeight + this.topPadding)
+        return tHeight - (value - this.borders.minY) / (this.borders.maxY - this.borders.minY) * tHeight + this.topPadding
     }
 
     public addColumn(column: Telecolumn) {
