@@ -154,9 +154,9 @@ export class Telecolumn {
                     opacity = Math.round(opacity * 255).toString(16)
                     opacity = opacity.length < 2 ? '0' + opacity : opacity
                     c.path(allVals, this.color + opacity, this.width)
-                    if (nextRedraw) {
-                        this.telechart.redraw()
-                    }
+                }
+                if (nextRedraw) {
+                    this.telechart.redraw()
                 }
             }
         }
