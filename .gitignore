@@ -3,5 +3,6 @@
 dist/*
 !dist/index.html
 !dist/chart_data.js
+!dist/telechart.css
 node_modules
 package-lock.json

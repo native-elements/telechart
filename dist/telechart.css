@@ -1,0 +1,89 @@
+.telechart {
+    position: relative;
+}
+.telechart-tip {
+    background: #fff;
+    position: absolute;
+    border: #e3e3e3 1px solid;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, .1);
+    border-radius: 10px;
+    transition: .1s;
+    padding: 7px 12px;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #222;
+}
+.telechart-tip.dark {
+    background: #253241;
+    border-color: #202a37;
+    color: #fff;
+}
+.telechart-tip-title {
+    margin-bottom: 12px;
+}
+.telechart-tip-value {
+    display: inline-block;
+    margin-right: 10px;
+}
+.telechart-tip-value b {
+    display: block;
+    font-size: 1.2em;
+    line-height: .95em;
+}
+.telechart-tip-value span {
+    font-size: .85em;
+}
+.telegend {
+    color: #43484b;
+}
+.telegend.dark {
+    color: #e8ecee;
+}
+.telegend-telement {
+    display: inline-block;
+    border: 1px #e6ecf0 solid;
+    font-size: 15px;
+    border-radius: 100px;
+    padding: 7px 15px 7px 8px;
+    cursor: pointer;
+    margin: 15px 13px 0 0;
+}
+.telegend.dark .telegend-telement {
+    border-color: #344658;
+}
+.telegend-element-checkbox {
+    display: inline-block;
+    border: 2px solid;
+    box-sizing: border-box;
+    border-radius: 100px;
+    width: 22px;
+    height: 22px;
+    margin-right: 10px;
+    vertical-align: middle;
+    position: relative;
+    transition: border-width .3s;
+}
+.telegend-element-checkbox div {
+    display: block;
+    position: absolute;
+    border-bottom: 2px solid #fff;
+    border-left: 2px solid #fff;
+    width: 8px;
+    height: 4px;
+    transform: rotate(-45deg);
+    left: 5px;
+    top: 4px;
+    transition: left .3s, top .3s, opacity .3s;
+}
+.telegend-telement.visible .telegend-element-checkbox {
+    border: 11px solid;
+}
+.telegend-telement.visible .telegend-element-checkbox div {
+    opacity: 1;
+    left: -5px;
+    top: -4px;
+}
+.telegend-element-label {
+    display: inline-block;
+    vertical-align: middle;
+}
