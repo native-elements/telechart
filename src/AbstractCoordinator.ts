@@ -51,12 +51,15 @@ export abstract class AbstractCoordinator {
         this.recalcBorders()
     }
 
-    public recalcBorders() {
-        this.borders = this.getNewBorders()
+    public recalcBorders(duration = 100) {
+        if (!this.columns.filter(c => c.visible).length) {
+            return
+        }
+        this.borders = this.getNewBorders(duration)
         this.telechart.redraw()
     }
 
-    protected getNewBorders(animate?: number) {
+    protected getNewBorders(duration?: number) {
         const result = {
             minX: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinX(this.currentRangeDisplay))),
             maxX: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxX(this.currentRangeDisplay))),
@@ -64,10 +67,10 @@ export abstract class AbstractCoordinator {
             maxY: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxY(this.currentRangeDisplay))),
         }
         return {
-            minX: animate ? Telemation.create(this.borders.minX.value, result.minX, 100) : Telemation.create(result.minX),
-            maxX: animate ? Telemation.create(this.borders.maxX.value, result.maxX, 100) : Telemation.create(result.maxX),
-            minY: animate ? Telemation.create(this.borders.minY.value, result.minY, animate) : Telemation.create(result.minY),
-            maxY: animate ? Telemation.create(this.borders.maxY.value, result.maxY, animate) : Telemation.create(result.maxY),
+            minX: duration && this.borders ? Telemation.create(this.borders.minX.value, result.minX, 100) : Telemation.create(result.minX),
+            maxX: duration && this.borders ? Telemation.create(this.borders.maxX.value, result.maxX, 100) : Telemation.create(result.maxX),
+            minY: duration && this.borders ? Telemation.create(this.borders.minY.value, result.minY, duration) : Telemation.create(result.minY),
+            maxY: duration && this.borders ? Telemation.create(this.borders.maxY.value, result.maxY, duration) : Telemation.create(result.maxY),
         }
     }
 

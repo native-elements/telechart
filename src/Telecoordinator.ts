@@ -64,7 +64,6 @@ export class Telecoordinator extends AbstractCoordinator {
         const cfg = this.config
         const dateWidth = 75
 
-        c.clear()
         if (this.columns.length && this.columns[0].currentPoint) {
             c.line(
                 [this.getCanvasX(this.columns[0].currentPoint.x), 0],
@@ -149,20 +148,10 @@ export class Telecoordinator extends AbstractCoordinator {
     }
 
     public recalcBorders(duration = 100) {
-        if (!this.columns.filter(c => c.visible).length) {
-            return
-        }
-        if (!this.animate) {
-            super.recalcBorders()
-            this.recalcGuides()
-            return
-        } else {
-            const old = this.borders.maxY.to
-            this.borders = this.getNewBorders(duration)
-            if (old !== this.borders.maxY.to) {
-                this.recalcGuides(duration)
-            }
-            this.telechart.redraw()
+        const old = this.borders ? this.borders.maxY.to : 0
+        super.recalcBorders(duration)
+        if (old !== this.borders.maxY.to) {
+            this.recalcGuides(duration)
         }
     }
 

@@ -65,14 +65,17 @@ export class Telemap extends AbstractCoordinator {
         const left = this.rangeProperty!.from.value * this.telecanvas.width
         const width = (this.rangeProperty!.to.value - this.rangeProperty!.from.value) * this.telecanvas.width
 
+        if (this.columns.reduce((r, col) => !col.opacity.finished || r, false)) {
+            this.telecanvasCached = false
+        }
         if (!this.telecanvasCached) {
             this.cacheTeelcanvas.clear()
             this.columns.forEach(col => this.drawColumn(col))
             this.cacheTeelcanvas.drawTelecanvas(this.telecanvas, 0, -this.topPadding)
             this.telecanvasCached = true
-        } else {
-            c.drawTelecanvas(this.cacheTeelcanvas, 0, this.topPadding)
+            c.clear()
         }
+        c.drawTelecanvas(this.cacheTeelcanvas, 0, this.topPadding)
 
         c.roundedRect(0, this.topPadding, left + 6, this.height, 6, this.config.shadow) // Shadow to left
         c.roundedRect(left + width - 6, this.topPadding, this.telecanvas.width - left - width + 6, this.height, 6, this.config.shadow) // Shadow to right
@@ -111,11 +114,14 @@ export class Telemap extends AbstractCoordinator {
     }
 
     protected drawColumn(column: Telecolumn) {
-        if (column.visible) {
+        if (column.opacity.value > 0) {
+            let opacity = Math.round(column.opacity.value * 255).toString(16)
+            if (opacity.length === 1) {
+                opacity = '0' + opacity
+            }
             this.telecanvas.path(column.values
-                .filter((v, i) => column.values.length > 130 ? i % 2 === 0 : true)
                 .map(v => [this.getCanvasX(v.x), this.getCanvasY(v.y)] as [number, number]),
-                column.color, column.width / 2,
+                column.color + opacity, column.width / 2,
             )
         }
     }

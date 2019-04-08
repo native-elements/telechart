@@ -51,7 +51,7 @@ export class Telechart {
         }
         this.config = {
             data: options.data,
-            height: options.height ? options.height : 400,
+            height: options.height ? options.height : 340,
         }
         this.initHTML()
         this.updateData(options.data ? options.data : { columns: [], types: {}, names: {}, colors: {} })
@@ -184,12 +184,11 @@ export class Telechart {
 
     protected draw() {
         this.needRedraw = false
-        this.telecoordinator.draw()
+        this.telecanvas.clear()
         this.telemap.draw()
-        //this.telemap.postDraw()
-        //this.telecoordinator.postDraw()
+        this.telecoordinator.draw()
         this.teletip.draw()
-        //this.telegend.draw()
+        this.telegend.draw()
         // this.needRedraw = true
     }
 

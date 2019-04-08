@@ -2,13 +2,14 @@ type Coordinate = [number, number]
 type MouseMoveListener = (x: number, y: number) => void
 
 export class Telecanvas {
+    private widthProperty!: number
     private mouseMoveListeners: MouseMoveListener[] = []
     private mouseDownListeners: Array<(x: number, y: number) => void> = []
     private mouseUpListeners: Array<() => void> = []
     private canvas: HTMLCanvasElement
     private context: CanvasRenderingContext2D
 
-    constructor(parentElement: HTMLElement|null, height: number, width?: number) {
+    constructor(parentElement: HTMLElement|null, public height: number, width?: number) {
         this.canvas = document.createElement('canvas')
         if (parentElement) {
             parentElement.appendChild(this.canvas)
@@ -42,10 +43,11 @@ export class Telecanvas {
     }
 
     get width() {
-        return this.canvas.clientWidth
+        return this.widthProperty
     }
 
     set width(value: number) {
+        this.widthProperty = value
         this.canvas.width = value * this.dpr
         this.canvas.style.width = `${value}px`
         this.context.scale(this.dpr, this.dpr)
@@ -53,10 +55,6 @@ export class Telecanvas {
 
     get dpr() {
         return window.devicePixelRatio || 1
-    }
-
-    get height() {
-        return this.canvas.clientHeight
     }
 
     set cursor(value: string) {
@@ -151,10 +149,7 @@ export class Telecanvas {
     }
 
     public drawTelecanvas(telecanvas: Telecanvas, destX: number, destY: number) {
-        if (this.dpr > 1) {
-            this.context.scale(1 / this.dpr, 1 / this.dpr)
-        }
-        telecanvas.context.scale(1, 1)
+        this.context.resetTransform()
         this.context.drawImage(telecanvas.canvas, destX * this.dpr, destY * this.dpr)
         if (this.dpr > 1) {
             this.context.scale(this.dpr, this.dpr)

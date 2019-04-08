@@ -74,6 +74,7 @@
     left: 5px;
     top: 4px;
     transition: left .3s, top .3s, opacity .3s;
+    opacity: 0;
 }
 .telegend-telement.visible .telegend-element-checkbox {
     border: 11px solid;
