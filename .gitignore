@@ -2,7 +2,7 @@
 .code
 dist/*
 !dist/index.html
-!dist/chart_data.js
+!dist/data
 !dist/telechart.css
 node_modules
 package-lock.json

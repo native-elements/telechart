@@ -66,18 +66,31 @@
     <div id="telechartDiv"></div>
     
     <div class="sourceLink"><a href="./sources.tar.gz">Download sources</a></div>
-    <script src="chart_data.js"></script>
     <script src="telechart.min.js?6"></script>
     <script>
+        window.getData = function(url, callback) {
+            var request = new XMLHttpRequest();
+            request.onreadystatechange = function () {
+                if (request.readyState === 4 && request.status === 200) {
+                    var data = JSON.parse(request.responseText);
+                    callback(data)
+                }
+            };
+            request.open('GET', url, true);
+            request.send(null);
+        }
+        var dataUrls = ['data/1/overview.json', 'data/2/overview.json', 'data/3/overview.json', 'data/4/overview.json', 'data/5/overview.json']
         var telecharts = []
-        for (var n = 0; n < chartData.length; n++) {
-            setTimeout(((n) => {
-                var chart = document.createElement('div')
-                chart.classList.add('chart')
-                chart.innerHTML = '<h1>Chart #' + n + '</h1><div class="chartWrp" id="chart' + n + '"></div>'
-                document.getElementById('telechartDiv').appendChild(chart)
-                telecharts.push(Telechart.init(document.getElementById('chart' + n), { data: chartData[n] }))
-            }).bind(null, n), 10 * n)
+        for (var n = 0; n < dataUrls.length; n++) {
+            var chart = document.createElement('div')
+            chart.classList.add('chart')
+            chart.innerHTML = '<h1>Chart #' + n + '</h1><div class="chartWrp" id="chart' + n + '"></div>'
+            document.getElementById('telechartDiv').appendChild(chart)
+            !function(n) {
+                    getData(dataUrls[n], function(data) {
+                    telecharts.push(Telechart.init(document.getElementById('chart' + n), { data }))
+                })
+            }(n)
         }
         function switchTheme() {
             var theme = document.body.classList.contains('dark') ? 'light' : 'dark'
