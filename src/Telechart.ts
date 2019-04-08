@@ -73,10 +73,10 @@ export class Telechart {
 
     set theme(value) {
         this.themeProperty = value
+        this.teletip.theme = value
         this.telecoordinator.theme = value
         this.telemap.theme = value
         this.telegend.theme = value
-        this.teletip.theme = value
         this.columns.forEach(c => c.theme = value)
         this.redraw()
     }
@@ -146,26 +146,36 @@ export class Telechart {
     }
 
     protected initHTML() {
-        const canvasWrapper = this.element.appendChild(document.createElement('div'))
-        canvasWrapper.classList.add('telechart-canvas-wrapper')
-        canvasWrapper.style.position = 'relative'
-        canvasWrapper.style.height = `${this.config.height}px`
         this.element.classList.add('telechart')
         this.element.style.fontFamily = 'sans-serif'
         this.element.style.userSelect = 'none'
         this.element.style.webkitTapHighlightColor = '#ffffff00'
-        this.telecanvas = new Telecanvas(canvasWrapper)
-        this.telemap = new Telemap(this, canvasWrapper)
+
+        this.telecanvas = new Telecanvas(this.element, this.config.height!)
+
+        this.telemap = new Telemap(this)
         this.telecoordinator = new Telecoordinator(this)
-        this.teletip = new Teletip(this, canvasWrapper)
+        this.teletip = new Teletip(this, this.element)
         this.telegend = new Telegend(this, this.element)
 
         window.addEventListener('resize', () => this.redraw())
-        this.telecanvas.addMouseMoveListener(() => this.redraw())
 
+        let frames = 0
+        let start = Date.now()
+        let fps = 60
         const draw = () => {
+            const needRedraw = this.needRedraw
             if (this.needRedraw) {
                 this.draw()
+            }
+            frames++
+            if (frames % 30 === 0) {
+                fps = 1 / ((Date.now() - start) / 1000 / 30)
+                start = Date.now()
+            }
+            if (needRedraw || frames % 50 === 0) {
+                this.telecanvas.rect(2, 2, 30, 10, '#fff')
+                this.telecanvas.text('fps ' + fps.toFixed(0), [3, 10], '#000', 'sans', 9)
             }
             window.requestAnimationFrame(draw)
         }
@@ -174,15 +184,13 @@ export class Telechart {
 
     protected draw() {
         this.needRedraw = false
-        this.telecanvas.clear()
         this.telecoordinator.draw()
         this.telemap.draw()
-        this.columns.forEach(c => c.draw())
-        this.columns.forEach(c => c.postDraw())
-        this.telemap.postDraw()
-        this.telecoordinator.postDraw()
+        //this.telemap.postDraw()
+        //this.telecoordinator.postDraw()
         this.teletip.draw()
-        this.telegend.draw()
+        //this.telegend.draw()
+        // this.needRedraw = true
     }
 
 }

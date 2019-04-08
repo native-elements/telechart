@@ -8,47 +8,64 @@ export class Telecanvas {
     private canvas: HTMLCanvasElement
     private context: CanvasRenderingContext2D
 
-    constructor(parentElement: HTMLElement) {
-        const getCtr = () => window.devicePixelRatio || 1
-        this.canvas = parentElement.appendChild(document.createElement('canvas'))
-        this.canvas.height = parentElement.offsetHeight * getCtr()
-        this.canvas.style.height = `${parentElement.offsetHeight}px`
-        this.canvas.style.display = 'block'
+    constructor(parentElement: HTMLElement|null, height: number, width?: number) {
+        this.canvas = document.createElement('canvas')
+        if (parentElement) {
+            parentElement.appendChild(this.canvas)
+            this.canvas.style.display = 'block'
+        } else {
+            document.body.appendChild(this.canvas)
+            this.canvas.style.display = 'none'
+        }
+        this.canvas.height = height * this.dpr
+        this.canvas.style.height = `${height}px`
         this.context = this.canvas.getContext('2d')!
         window.addEventListener('resize', () => {
-            this.canvas.width = parentElement.clientWidth * getCtr()
-            this.canvas.style.width = '100%'
-            this.context.scale(getCtr(), getCtr())
+            this.width = width ? width : parentElement!.clientWidth
         })
+        window.dispatchEvent(new Event('resize'))
 
-        let x = 0
-        let y = 0
-        this.canvas.addEventListener('mousemove', (e) => {
-            x = e.clientX
-            y = e.clientY
-            this.mouseMoveListeners.forEach(callback => callback(e.offsetX, e.offsetY))
-        })
-        this.canvas.addEventListener('mousedown', () => this.mouseDownListeners.forEach(callback => callback(x, y)))
-        this.canvas.addEventListener('touchstart', (e) => {
-            x = e.touches[0].clientX
-            y = e.touches[0].clientX
-            this.mouseDownListeners.forEach(callback => callback(x, y))
-        })
-        this.canvas.addEventListener('mouseup', () => this.mouseUpListeners.forEach(callback => callback()))
-        this.canvas.addEventListener('touchend', () => this.mouseUpListeners.forEach(callback => callback()))
+        const mousemove = (x: number, y: number) => {
+            const rect = this.canvas.getBoundingClientRect()
+            this.mouseMoveListeners.forEach(callback => callback(x - rect.left, y - rect.top))
+        }
+        const mousedown = (x: number, y: number) => {
+            const rect = this.canvas.getBoundingClientRect()
+            this.mouseDownListeners.forEach(callback => callback(x - rect.left, y - rect.top))
+        }
+        window.addEventListener('mousemove', (e) => mousemove(e.clientX, e.clientY))
+        window.addEventListener('touchmove', (e) => mousemove(e.touches[0].clientX, e.touches[0].clientY))
+        this.canvas.addEventListener('mousedown', (e) => mousedown(e.clientX, e.clientY))
+        this.canvas.addEventListener('touchstart', (e) => mousedown(e.touches[0].clientX, e.touches[0].clientY))
+        window.addEventListener('mouseup', () => this.mouseUpListeners.forEach(callback => callback()))
+        window.addEventListener('touchend', () => this.mouseUpListeners.forEach(callback => callback()))
     }
 
     get width() {
         return this.canvas.clientWidth
     }
 
+    set width(value: number) {
+        this.canvas.width = value * this.dpr
+        this.canvas.style.width = `${value}px`
+        this.context.scale(this.dpr, this.dpr)
+    }
+
+    get dpr() {
+        return window.devicePixelRatio || 1
+    }
+
     get height() {
         return this.canvas.clientHeight
     }
 
+    set cursor(value: string) {
+        this.canvas.style.cursor = value
+    }
+
     public line(from: Coordinate, to: Coordinate, color: string, width = 1) {
         const c = this.context
-        c.lineCap = 'round'
+        c.lineCap = 'butt'
         c.strokeStyle = color
         c.lineWidth = width
         c.beginPath()
@@ -59,14 +76,14 @@ export class Telecanvas {
 
     public path(path: Array<[number, number]>, color: string, width = 1) {
         const c = this.context
-        c.lineCap = 'round'
-        c.lineJoin = 'round'
+        c.lineJoin = 'miter'
+        c.miterLimit = 2
         c.strokeStyle = color
         c.lineWidth = width
         c.beginPath()
-        c.moveTo(path[0][0] + .5, path[0][1] + .5)
+        c.moveTo(path[0][0], path[0][1])
         for (let n = 1; n < path.length; n++) {
-            c.lineTo(path[n][0] + .5, path[n][1] + .5)
+            c.lineTo(path[n][0], path[n][1])
         }
         c.stroke()
     }
@@ -109,8 +126,43 @@ export class Telecanvas {
         }
     }
 
+    public roundedRect(left: number, top: number, width: number, height: number, radius: number, fill?: string, stroke?: string, borderWidth?: number) {
+        const c = this.context
+        c.beginPath()
+        c.moveTo(left + radius, top)
+        c.lineTo(left + width - radius, top)
+        c.quadraticCurveTo(left + width, top, left + width, top + radius)
+        c.lineTo(left + width, top + height - radius)
+        c.quadraticCurveTo(left + width, top + height, left + width - radius, top + height)
+        c.lineTo(left + radius, top + height)
+        c.quadraticCurveTo(left, top + height, left, top + height - radius)
+        c.lineTo(left, top + radius)
+        c.quadraticCurveTo(left, top, left + radius, top)
+        c.closePath()
+        if (fill) {
+            c.fillStyle = fill
+            c.fill()
+        }
+        if (stroke) {
+            c.strokeStyle = stroke
+            c.lineWidth = borderWidth!
+            c.stroke()
+        }
+    }
+
+    public drawTelecanvas(telecanvas: Telecanvas, destX: number, destY: number) {
+        if (this.dpr > 1) {
+            this.context.scale(1 / this.dpr, 1 / this.dpr)
+        }
+        telecanvas.context.scale(1, 1)
+        this.context.drawImage(telecanvas.canvas, destX * this.dpr, destY * this.dpr)
+        if (this.dpr > 1) {
+            this.context.scale(this.dpr, this.dpr)
+        }
+    }
+
     public clear() {
-        this.context.clearRect(0, 0, this.width, this.height);
+        this.context.clearRect(0, 0, this.width, this.height)
     }
 
     public addMouseMoveListener(callback: (x: number, y: number) => void) {

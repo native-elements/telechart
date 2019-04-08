@@ -1,6 +1,7 @@
 import { Telecolumn } from './Telecolumn'
 import { Telechart } from './Telechart'
-import { AbstractCoordinator, IBorders } from './AbstractCoordinator'
+import { AbstractCoordinator } from './AbstractCoordinator'
+import { Telemation } from './Telemation'
 
 export class Telecoordinator extends AbstractCoordinator {
     public animate = false
@@ -8,17 +9,15 @@ export class Telecoordinator extends AbstractCoordinator {
     protected topPadding: number
     protected bottomPadding: number
     protected columns: Telecolumn[] = []
-    private guides: Array<{ y: number, title: string, old?: number }> = []
+    private guides: Array<{ y: number, title: string, opacity: Telemation }> = []
     private milestones: Array<{ x: number, title: string|null }> = []
-    private interval: number|null = null
     private themeProperty: 'light'|'dark' = 'light'
-    private cache = { months: {} as any }
 
     constructor(telechart: Telechart) {
         super(telechart)
         this.currentRangeDisplay = true
         this.topPadding = 30
-        this.bottomPadding = 40 + telechart.telemap.height
+        this.bottomPadding = 40 + this.telechart.telemap.height
         this.telecanvas.addMouseMoveListener(this.onMouseMove.bind(this))
         this.theme = telechart.theme
     }
@@ -65,6 +64,7 @@ export class Telecoordinator extends AbstractCoordinator {
         const cfg = this.config
         const dateWidth = 75
 
+        c.clear()
         if (this.columns.length && this.columns[0].currentPoint) {
             c.line(
                 [this.getCanvasX(this.columns[0].currentPoint.x), 0],
@@ -82,6 +82,9 @@ export class Telecoordinator extends AbstractCoordinator {
             if (!m.title) {
                 const date = new Date(m.x)
                 const month = date.getMonth()
+                if (!this.cache.months) {
+                    this.cache.months = {}
+                }
                 if (!this.cache.months[month]) {
                     const str = date.toLocaleDateString(undefined, { month: 'short' })
                     this.cache.months[month] = str.length > 3 ? str.substr(0, 3) : str
@@ -109,17 +112,23 @@ export class Telecoordinator extends AbstractCoordinator {
         for (let n = this.guides.length - 1; n >= 0; n--) {
             const g = this.guides[n]
             const y = this.getCanvasY(g.y)
-            let opacity: string = Math.round(g.old ? --g.old / 10 * 255 : 255).toString(16)
-            if (g.old === 0) {
+            let opacity: string = Math.round(g.opacity.value * 255).toString(16)
+            if (g.opacity.finished && g.opacity.value === 0) {
                 this.guides.splice(n, 1)
             }
             opacity = opacity.length < 2 ? '0' + opacity : opacity
             c.line([0, y], [c.width, y], cfg.axisColor + opacity, 1)
             c.text(g.title, [0, y - 6], cfg.axisTextColor + opacity, undefined, 11)
         }
-    }
-
-    public postDraw() {
+        this.columns.forEach(col => this.drawColumn(col))
+        this.columns.forEach(col => {
+            if (col.current) {
+                c.circle([this.getCanvasX(col.current.x), this.getCanvasY(col.current.y)], 4.5, col.color, col.config.background, col.width)
+            }
+        })
+        if (!this.borders.maxX.finished || !this.borders.maxY.finished) {
+            this.telechart.redraw()
+        }
         const curColummns = this.columns.filter(col => col.currentPoint)
         const columns = curColummns.map(col => {
             return { name: col.name, color: col.color, value: col.currentPoint!.y }
@@ -147,67 +156,82 @@ export class Telecoordinator extends AbstractCoordinator {
             super.recalcBorders()
             this.recalcGuides()
             return
-        }
-        const initialBorders = this.borders
-        super.recalcBorders()
-        const targetBorders = this.borders
-        this.recalcGuides(true)
-        if (initialBorders.maxY === targetBorders.maxY) {
-            return
-        }
-
-        if (this.interval) {
-            clearInterval(this.interval)
-            this.interval = null
-        }
-        const startTime = Date.now()
-        const getVal = ((key: 'minX'|'maxX'|'minY'|'maxY') => {
-            return Math.round(initialBorders[key] + (targetBorders[key] - initialBorders[key]) * (Date.now() - startTime) / duration)
-        })
-        const intervalFunc = () => {
-            this.borders = { minX: targetBorders.minX, maxX: targetBorders.maxX, minY: getVal('minY'), maxY: getVal('maxY') }
-            this.telechart.redraw()
-            if (Date.now() > startTime + duration) {
-                this.borders = targetBorders
-                this.guides = this.guides.filter(g => g.old === undefined)
-                clearInterval(this.interval!)
-                this.interval = null
+        } else {
+            const old = this.borders.maxY.to
+            this.borders = this.getNewBorders(duration)
+            if (old !== this.borders.maxY.to) {
+                this.recalcGuides(duration)
             }
+            this.telechart.redraw()
         }
-        this.interval = setInterval(intervalFunc, 10)
-        intervalFunc()
     }
 
-    protected recalcGuides(animateOld: boolean = false) {
+    protected drawColumn(column: Telecolumn) {
         const c = this.telecanvas
-        if (!animateOld) {
+
+        const allVals = column.currentValues
+        while (this.getCanvasX(allVals[0].x) > 0) {
+            const prevIndex = column.values.indexOf(allVals[0]) - 1
+            if (prevIndex < 0) {
+                break
+            }
+            allVals.unshift(column.values[prevIndex])
+        }
+        while (this.getCanvasX(allVals[allVals.length - 1].x) < this.telecanvas.width) {
+            const nextIndex = column.values.indexOf(allVals[allVals.length - 1]) + 1
+            if (nextIndex >= column.values.length) {
+                break
+            }
+            allVals.push(column.values[nextIndex])
+        }
+        if (allVals.length) {
+            let opacity: number|string = column.opacity.value
+            if (opacity) {
+                opacity = Math.round(opacity * 255).toString(16)
+                opacity = opacity.length < 2 ? '0' + opacity : opacity
+                c.path(allVals.map(i => [this.getCanvasX(i.x), this.getCanvasY(i.y)] as [number, number]), column.color + opacity, column.width)
+            }
+            if (!column.opacity.finished) {
+                this.telechart.redraw()
+            }
+        }
+    }
+
+    protected recalcGuides(animateSpeed: number = 0) {
+        const c = this.telecanvas
+        if (!animateSpeed) {
             this.guides = []
         } else {
-            this.guides.forEach(g => {
-                if (g.old === undefined) {
-                    g.old = 6
-                }
-            })
+            for (const g of this.guides) {
+                g.opacity = Telemation.create(g.opacity.value, 0, animateSpeed)
+            }
         }
         for (let n = 0; n < 6; n++) {
             const y = this.getYValue(c.height - this.bottomPadding - (c.height - this.bottomPadding - this.topPadding) / 6 * n)
             const title = n === 0 ? '0' : String(y - y % Math.pow(10, y.toString().length - 2))
-            this.guides.push({ y, title })
+            this.guides.push({ y, title, opacity: animateSpeed ? Telemation.create(0, 1, animateSpeed) : Telemation.create(1) })
         }
     }
 
     protected recalcMilestones() {
         super.recalcBorders()
         this.milestones = []
-        for (let x = this.borders.minX; x < this.borders.maxX; x += 60 * 60 * 24 * 1000) {
+        for (let x = this.borders.minX.to; x < this.borders.maxX.to; x += 60 * 60 * 24 * 1000) {
             const value = { x, title: null }
             this.milestones.push(value)
         }
     }
 
     protected onMouseMove(x: number, y: number) {
-        const val = this.getXValue(x)
-        this.columns.forEach(c => c.setCurrentX(val))
+        if (!this.borders.maxX.finished) {
+            return
+        }
+        if (x >= 0 && y >= 0 && x < this.telecanvas.width && y < this.height) {
+            const val = this.getXValue(x)
+            if (this.columns.reduce((r, c) => c.setCurrentX(val) || r, false)) {
+                this.telechart.redraw()
+            }
+        }
     }
 
 }

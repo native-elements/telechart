@@ -1,19 +1,35 @@
 import { Telechart } from './Telechart'
 import { AbstractCoordinator } from './AbstractCoordinator'
 import { Telecolumn } from './Telecolumn'
+import { Telecanvas } from './Telecanvas'
+import { Telemation } from './Telemation'
 
 export class Telemap extends AbstractCoordinator {
     protected config!: { rangeBackground: string, rangeFill: string, shadow: string }
-    protected element!: HTMLElement
+    protected leftShadow!: HTMLElement
+    protected rightShadow!: HTMLElement
     protected display!: HTMLElement
-    protected rangeProperty: { from: number, to: number }|null = null
-    protected bottomPadding = 5
+    protected rangeProperty: { from: Telemation, to: Telemation }|null = null
+    protected topPadding = 0
+    protected bottomPadding = 0
+    protected cacheTeelcanvas: Telecanvas
+    protected telecanvasCached = false
     private themeProperty: 'light'|'dark' = 'light'
 
-    constructor(telechart: Telechart, parentElement: HTMLElement) {
+    constructor(telechart: Telechart, public height = 38) {
         super(telechart)
-        this.initHTML(parentElement)
         this.theme = telechart.theme
+        this.topPadding = this.telecanvas.height - height
+        this.initHTML()
+        this.cacheTeelcanvas = new Telecanvas(null, this.height, this.telecanvas.width)
+        window.addEventListener('resize', () => {
+            this.cacheTeelcanvas.width = this.telecanvas.width
+            this.telecanvasCached = false
+        })
+    }
+
+    get telecanvas() {
+        return this.telechart.telecanvas
     }
 
     public addColumn(column: Telecolumn) {
@@ -37,206 +53,152 @@ export class Telemap extends AbstractCoordinator {
         } else {
             this.config = {
                 ...this.config,
-                rangeBackground: '#ddeaf3',
+                rangeBackground: '#c0d1e1',
                 rangeFill: '#fff',
-                shadow: '#f5f9fbcc',
+                shadow: '#e7f3fb99',
             }
         }
     }
 
-    get topPadding() {
-        return this.telechart.telecoordinator.height
-    }
-
-    get height() {
-        return Math.max(38)
-    }
-
     public draw() {
-        this.telecanvas.rect(
-            this.rangeProperty!.from * this.telecanvas.width, this.topPadding - 5,
-            (this.rangeProperty!.to - this.rangeProperty!.from) * this.telecanvas.width, this.height + 5, this.config.rangeBackground,
-        )
-        this.telecanvas.rect(
-            this.rangeProperty!.from * this.telecanvas.width + 4, this.topPadding - 4,
-            (this.rangeProperty!.to - this.rangeProperty!.from) * this.telecanvas.width - 8, this.height + 3, this.config.rangeFill,
-        )
-        this.display.style.left = `${this.rangeProperty!.from * this.telecanvas.width}px`
-        this.display.style.width = `${(this.rangeProperty!.to - this.rangeProperty!.from) * this.telecanvas.width}px`
-    }
+        const c = this.telecanvas
+        const left = this.rangeProperty!.from.value * this.telecanvas.width
+        const width = (this.rangeProperty!.to.value - this.rangeProperty!.from.value) * this.telecanvas.width
 
-    public postDraw() {
-        this.telecanvas.rect(0, this.topPadding - 5, this.rangeProperty!.from * this.telecanvas.width, this.height + 5, this.config.shadow)
-        this.telecanvas.rect(
-            this.rangeProperty!.from * this.telecanvas.width + (this.rangeProperty!.to - this.rangeProperty!.from) * this.telecanvas.width, this.topPadding - 5,
-            this.telecanvas.width - this.rangeProperty!.from * this.telecanvas.width + (this.rangeProperty!.to - this.rangeProperty!.from) * this.telecanvas.width, this.height + 5, this.config.shadow,
-        )
+        if (!this.telecanvasCached) {
+            this.cacheTeelcanvas.clear()
+            this.columns.forEach(col => this.drawColumn(col))
+            this.cacheTeelcanvas.drawTelecanvas(this.telecanvas, 0, -this.topPadding)
+            this.telecanvasCached = true
+        } else {
+            c.drawTelecanvas(this.cacheTeelcanvas, 0, this.topPadding)
+        }
+
+        c.roundedRect(0, this.topPadding, left + 6, this.height, 6, this.config.shadow) // Shadow to left
+        c.roundedRect(left + width - 6, this.topPadding, this.telecanvas.width - left - width + 6, this.height, 6, this.config.shadow) // Shadow to right
+
+        c.roundedRect(left, this.topPadding, 10, this.height, 6, this.config.rangeBackground) // Left gripper corners
+        c.rect(left + 5, this.topPadding, 5, this.height, this.config.rangeBackground) // Left gripper rect
+        c.roundedRect(left + 4, this.topPadding + 13, 2, 12, 2, this.config.rangeFill) // Left gripper strip
+
+        c.roundedRect(left + width - 10, this.topPadding, 10, this.height, 6, this.config.rangeBackground) // Right gripper corners
+        c.rect(left + width - 10, this.topPadding, 5, this.height, this.config.rangeBackground) // Right gripper rect
+        c.roundedRect(left + width - 6, this.topPadding + 13, 2, 12, 2, this.config.rangeFill) // Right gripper strip
+
+        c.line([left + 10 - 1, this.topPadding], [left + width - 10, this.topPadding], this.config.rangeBackground)
+        c.line([left + 10 - 1, this.topPadding + this.height - 1], [left + width - 10, this.topPadding + this.height - 1], this.config.rangeBackground)
+
+        if (!this.rangeProperty!.to.finished) {
+            this.telechart.redraw()
+        }
     }
 
     set range(value: { from: number, to: number }|null) {
-        this.rangeProperty = value
+        const current = this.range
+        this.rangeProperty = {
+            from: Telemation.create(current ? current.from : 0, value!.from, current ? 50 : 0),
+            to: Telemation.create(current ? current.to : 0, value!.to, current ? 50 : 0),
+        }
         this.columns.forEach(c => c.setCurrentRange(
-            this.borders.minX + (this.borders.maxX - this.borders.minX) * value!.from,
-            this.borders.minX + (this.borders.maxX - this.borders.minX) * value!.to,
+            this.borders.minX.to + (this.borders.maxX.to - this.borders.minX.to) * value!.from,
+            this.borders.minX.to + (this.borders.maxX.to - this.borders.minX.to) * value!.to,
         ))
         this.telechart.telecoordinator.recalcBorders(200)
     }
 
     get range(): { from: number, to: number }|null {
-        return this.rangeProperty
+        return this.rangeProperty ? { from: this.rangeProperty!.from.value, to: this.rangeProperty!.to.value } : null
     }
 
-    protected initHTML(parentElement: HTMLElement) {
-        const element = this.element = document.createElement('div')
-        element.classList.add('telechart-map')
-        element.style.position = 'absolute'
-        element.style.height = `${this.height + 5}px`
-        element.style.bottom = '0'
-        element.style.left = '0'
-        element.style.right = '0'
-        parentElement.appendChild(element)
+    protected drawColumn(column: Telecolumn) {
+        if (column.visible) {
+            this.telecanvas.path(column.values
+                .filter((v, i) => column.values.length > 130 ? i % 2 === 0 : true)
+                .map(v => [this.getCanvasX(v.x), this.getCanvasY(v.y)] as [number, number]),
+                column.color, column.width / 2,
+            )
+        }
+    }
 
-        const display = this.display = document.createElement('div')
-        display.classList.add('telechart-map-elt')
-        display.style.position = 'absolute'
-        display.style.height = '100%'
-        display.style.top = '0'
-        display.style.cursor = 'move'
-        element.append(display)
-
-        const leftGripper = document.createElement('div')
-        leftGripper.classList.add('telechart-map-left-gripper')
-        leftGripper.style.position = 'absolute'
-        leftGripper.style.left = '-10px'
-        leftGripper.style.top = '0'
-        leftGripper.style.width = '25px'
-        leftGripper.style.height = '100%'
-        display.appendChild(leftGripper)
-
-        const rightGripper = document.createElement('div')
-        rightGripper.classList.add('telechart-map-right-gripper')
-        rightGripper.style.position = 'absolute'
-        rightGripper.style.right = '-10px'
-        rightGripper.style.top = '0'
-        rightGripper.style.width = '25px'
-        rightGripper.style.height = '100%'
-        display.appendChild(rightGripper)
-
+    protected initHTML() {
         let currentPos = { left: 0, top: 0 }
         let startRange: { from: number, to: number }|null = null
         let startPos: { left: number, top: number }|null = null
-        let moveType: 'all'|'from'|'to' = 'all'
-        let timeout: number|null = null
+        let moveType: 'all'|'from'|'to'|null = null
+        let yInArea = false
         const mousemove = (x: number, y: number) => {
             currentPos = { left: x, top: y }
-            if (!startPos) {
-                return
-            }
-            if (timeout) {
-                return
-            }
-            timeout = setTimeout(() => {
-                timeout = null
-                if (!startPos || !startRange) {
-                    return
-                }
-                const diff = (currentPos.left - startPos!.left) / this.telecanvas.width
-                let newRangeFrom = startRange!.from
-                let newRangeTo = startRange!.to
-                if (moveType === 'all' || moveType === 'from') {
-                    newRangeFrom += diff
-                }
-                if (moveType === 'all' || moveType === 'to') {
-                    newRangeTo += diff
-                }
-                if (newRangeFrom < 0) {
-                    if (moveType === 'all' || moveType === 'to') {
-                        newRangeTo = newRangeTo - newRangeFrom
-                    }
-                    newRangeFrom = 0
-                }
-                if (newRangeTo > 1) {
-                    if (moveType === 'all' || moveType === 'from') {
-                        newRangeFrom = newRangeFrom - (newRangeTo - 1)
-                    }
-                    newRangeTo = 1
-                }
-                if (newRangeTo - newRangeFrom < 0.05) {
-                    if (moveType === 'to') {
-                        newRangeTo = newRangeFrom + 0.05
+            yInArea = y >= this.topPadding && y < this.topPadding + this.height
+
+            if (!startPos || !startRange) {
+                if (yInArea) {
+                    const left = this.range!.from * this.telecanvas.width
+                    const width = (this.range!.to - this.range!.from) * this.telecanvas.width
+                    if (x >= left - 5 && x <= left + 20) {
+                        moveType = 'from'
+                        this.telecanvas.cursor = 'ew-resize'
+                    } else if (x >= left + width - 15 && x < left + width + 5) {
+                        moveType = 'to'
+                        this.telecanvas.cursor = 'ew-resize'
+                    } else if (x >= left && x < left + width) {
+                        moveType = 'all'
+                        this.telecanvas.cursor = 'move'
                     } else {
-                        newRangeFrom = newRangeTo - 0.05
+                        moveType = null
+                        this.telecanvas.cursor = 'default'
                     }
+                } else {
+                    this.telecanvas.cursor = 'default'
                 }
-                this.range = { from: newRangeFrom, to: newRangeTo }
-            }, 10)
+                return
+            }
+            this.columns.forEach(c => c.setCurrentX(null))
+            const diff = (currentPos.left - startPos!.left) / this.telecanvas.width
+            let newRangeFrom = startRange!.from
+            let newRangeTo = startRange!.to
+            if (moveType === 'all' || moveType === 'from') {
+                newRangeFrom += diff
+            }
+            if (moveType === 'all' || moveType === 'to') {
+                newRangeTo += diff
+            }
+            if (newRangeFrom < 0) {
+                if (moveType === 'all' || moveType === 'to') {
+                    newRangeTo = newRangeTo - newRangeFrom
+                }
+                newRangeFrom = 0
+            }
+            if (newRangeTo > 1) {
+                if (moveType === 'all' || moveType === 'from') {
+                    newRangeFrom = newRangeFrom - (newRangeTo - 1)
+                }
+                newRangeTo = 1
+            }
+            if (newRangeTo - newRangeFrom < 0.05) {
+                if (moveType === 'to') {
+                    newRangeTo = newRangeFrom + 0.05
+                } else {
+                    newRangeFrom = newRangeTo - 0.05
+                }
+            }
+            this.range = { from: newRangeFrom, to: newRangeTo }
         }
-        const mousedown = (type: 'all'|'from'|'to' = 'all') => {
-            moveType = type
-            startPos = { ...currentPos }
-            startRange = { ...this.rangeProperty! }
+        const mousedown = (x: number, y: number) => {
+            if (moveType) {
+                startPos = { ...currentPos }
+                startRange = { ...this.range! }
+            }
         }
         const mouseup = () => {
             startPos = null
             startRange = null
         }
-        const elementDown = (x: number, y: number) => {
-            const left = (x - element.getBoundingClientRect().left) / this.telecanvas.width - (this.range!.to - this.range!.from) / 2
-            const newRange = { from: left, to: left + this.range!.to - this.range!.from }
-            if (newRange.from < 0) {
-                newRange.from = 0
-                newRange.to = this.range!.to - this.range!.from
-            }
-            if (newRange.to > 1) {
-                newRange.to = 1
-                newRange.from = 1 - this.range!.to + this.range!.from
-            }
-            this.range = newRange
+        this.telecanvas.addMouseMoveListener(mousemove)
+        this.telecanvas.addMouseDownListener((x, y) => {
             mousemove(x, y)
-            mousedown()
-        }
-        window.addEventListener('touchmove', e => mousemove(e.touches[0].clientX, e.touches[0].clientY))
-        window.addEventListener('mousemove', e => mousemove(e.clientX, e.clientY))
-        display.addEventListener('touchstart', e => {
-            mousemove(e.touches[0].clientX, e.touches[0].clientY)
-            mousedown()
-            return false
+            mousedown(x, y)
         })
-        leftGripper.addEventListener('touchstart', e => {
-            mousemove(e.touches[0].clientX, e.touches[0].clientY)
-            mousedown('from')
-            e.stopPropagation()
-            return false
-        })
-        leftGripper.addEventListener('mousedown', e => {
-            mousedown('from')
-            e.stopPropagation()
-            return false
-        })
-        rightGripper.addEventListener('mousedown', e => {
-            mousedown('to')
-            e.stopPropagation()
-            return false
-        })
-        rightGripper.addEventListener('touchstart', e => {
-            mousemove(e.touches[0].clientX, e.touches[0].clientY)
-            mousedown('to')
-            e.stopPropagation()
-            return false
-        })
-        element.addEventListener('touchstart', (e) => {
-            elementDown(e.touches[0].clientX, e.touches[0].clientY)
-            e.stopPropagation()
-            return false
-        })
-        element.addEventListener('mousedown', (e) => {
-            elementDown(e.clientX, e.clientY)
-            e.stopPropagation()
-            return false
-        })
-        display.addEventListener('mousedown', () => mousedown())
-        window.addEventListener('touchend', mouseup)
-        window.addEventListener('mouseup', mouseup)
+        this.telecanvas.addMouseUpListener(mouseup)
     }
 
 }

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Telechart Example</title>
+    <link rel="stylesheet" type="text/css" href="telechart.css" />
     <style>
         body {
             margin: 12px;
@@ -44,6 +45,18 @@
         .sourceLink a {
             color: #999;
         }
+        @media (min-width: 500px) {
+            #telechartDiv {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .chart {
+                max-width: 500px;
+                flex-grow: 1;
+                margin: 0 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -64,7 +77,7 @@
                 chart.innerHTML = '<h1>Chart #' + n + '</h1><div class="chartWrp" id="chart' + n + '"></div>'
                 document.getElementById('telechartDiv').appendChild(chart)
                 telecharts.push(Telechart.init(document.getElementById('chart' + n), { data: chartData[n] }))
-            }).bind(null, n), 10 + 10 * n)
+            }).bind(null, n), 10 * n)
         }
         function switchTheme() {
             var theme = document.body.classList.contains('dark') ? 'light' : 'dark'

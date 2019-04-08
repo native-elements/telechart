@@ -1,11 +1,12 @@
 import { Telechart } from './Telechart'
 import { Telecolumn } from './Telecolumn'
+import { Telemation } from './Telemation'
 
 export interface IBorders {
-    maxX: number,
-    maxY: number,
-    minX: number,
-    minY: number,
+    maxX: Telemation,
+    maxY: Telemation,
+    minX: Telemation,
+    minY: Telemation,
 }
 
 export abstract class AbstractCoordinator {
@@ -14,29 +15,30 @@ export abstract class AbstractCoordinator {
     protected abstract readonly bottomPadding: number
     protected columns: Telecolumn[] = []
     protected borders!: IBorders
+    protected cache: any = { }
 
     constructor(protected readonly telechart: Telechart) {}
 
-    get telecanvas() {
+    public get telecanvas() {
         return this.telechart.telecanvas
     }
 
     public getXValue(canvasX: number) {
-        return Math.round((this.borders.maxX - this.borders.minX) * canvasX / this.telecanvas.width + this.borders.minX)
+        return Math.round((this.borders.maxX.value - this.borders.minX.value) * canvasX / this.telecanvas.width + this.borders.minX.value)
     }
 
     public getYValue(canvasY: number) {
         const tHeight = this.telecanvas.height - (this.bottomPadding + this.topPadding)
-        return Math.round((this.topPadding - canvasY) * (this.borders.maxY - this.borders.minY) / tHeight + this.borders.maxY)
+        return Math.round((this.topPadding - canvasY) * (this.borders.maxY.to - this.borders.minY.to) / tHeight + this.borders.maxY.to)
     }
 
     public getCanvasX(value: number) {
-        return Math.round(((value - this.borders.minX) / (this.borders.maxX - this.borders.minX) * this.telecanvas.width) * 100) / 100
+        return (value - this.borders.minX.value) / (this.borders.maxX.value - this.borders.minX.value) * this.telecanvas.width
     }
 
     public getCanvasY(value: number) {
         const tHeight = this.telecanvas.height - (this.bottomPadding + this.topPadding)
-        return Math.round((tHeight - (value - this.borders.minY) / (this.borders.maxY - this.borders.minY) * tHeight + this.topPadding) * 100 / 100)
+        return tHeight - (value - this.borders.minY.value) / (this.borders.maxY.value - this.borders.minY.value) * tHeight + this.topPadding
     }
 
     public addColumn(column: Telecolumn) {
@@ -50,13 +52,23 @@ export abstract class AbstractCoordinator {
     }
 
     public recalcBorders() {
-        this.borders = {
+        this.borders = this.getNewBorders()
+        this.telechart.redraw()
+    }
+
+    protected getNewBorders(animate?: number) {
+        const result = {
             minX: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinX(this.currentRangeDisplay))),
             maxX: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxX(this.currentRangeDisplay))),
             minY: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinY(this.currentRangeDisplay)), 0),
             maxY: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxY(this.currentRangeDisplay))),
         }
-        this.telechart.redraw()
+        return {
+            minX: animate ? Telemation.create(this.borders.minX.value, result.minX, 100) : Telemation.create(result.minX),
+            maxX: animate ? Telemation.create(this.borders.maxX.value, result.maxX, 100) : Telemation.create(result.maxX),
+            minY: animate ? Telemation.create(this.borders.minY.value, result.minY, animate) : Telemation.create(result.minY),
+            maxY: animate ? Telemation.create(this.borders.maxY.value, result.maxY, animate) : Telemation.create(result.maxY),
+        }
     }
 
 }
