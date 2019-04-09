@@ -11,7 +11,7 @@ export class Teledisplay {
     constructor(protected readonly telechart: Telechart) {
         this.telechart.telecanvas.addMouseMoveListener(this.onMouseMove.bind(this))
         this.theme = telechart.theme
-        this.drawers.push(new SimpleChartDrawer(telechart, { isRangeDisplay: true, isDrawXLabels: true }))
+        this.drawers.push(new SimpleChartDrawer(telechart, { isRangeDisplay: true, isDrawXLabels: true, axisColor: 'dummy' }))
     }
 
     get firstDrawer() {
