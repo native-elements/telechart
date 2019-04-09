@@ -47,7 +47,7 @@ export class Telegend {
             telecolumn.visible = !telecolumn.visible
             element.classList.toggle('visible', telecolumn.visible)
             setTimeout(() => {
-                this.telechart.telecoordinator.recalcBorders(200)
+                this.telechart.teledisplay.recalcBorders(200)
                 this.telechart.telemap.recalcBorders(200)
                 this.telechart.redraw()
             }, 10)

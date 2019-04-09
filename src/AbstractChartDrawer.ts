@@ -9,18 +9,47 @@ export interface IBorders {
     minY: Telemation,
 }
 
-export abstract class AbstractCoordinator {
-    protected currentRangeDisplay = false
-    protected abstract readonly topPadding: number
-    protected abstract readonly bottomPadding: number
+export interface IAbstractChartDrawerOptions {
+    isRangeDisplay?: boolean
+    isDrawXLabels?: boolean
+    yLabelsPos?: 'left'|'right'|null
+    axisColor?: string|null
+    axisTextColor?: string
+    currentLineColor?: string
+}
+
+export abstract class AbstractChartDrawer {
+    public axisColor: string|null
+    public axisTextColor: string|null
+    public currentLineColor: string|null
+    public isRangeDisplay = false
+    public isDrawXLabels = false
+    public yLabelsPos: 'left'|'right'|null = null
+    public topPadding: number = 0
+    public bottomPadding: number = 0
+    public borders!: IBorders
     protected columns: Telecolumn[] = []
-    protected borders!: IBorders
     protected cache: any = { }
 
-    constructor(protected readonly telechart: Telechart) {}
+    constructor(protected readonly telechart: Telechart, options?: IAbstractChartDrawerOptions) {
+        this.isRangeDisplay = options && options.isRangeDisplay ? true : false
+        this.isDrawXLabels = options && options.isDrawXLabels ? true : false
+        this.yLabelsPos = options && options.yLabelsPos ? options.yLabelsPos : null
+        this.axisColor = options && options.axisColor ? options.axisColor : null
+        this.axisTextColor = options && options.axisTextColor ? options.axisTextColor : null
+        this.currentLineColor = options && options.currentLineColor ? options.currentLineColor : null
+    }
+
+    public abstract draw(): void
+
+    public abstract drawColumn(column: Telecolumn): void
 
     public get telecanvas() {
         return this.telechart.telecanvas
+    }
+
+    public get bordersAnimationFinished() {
+        return this.borders.maxX.finished && this.borders.maxY.finished
     }
 
     public getXValue(canvasX: number) {
@@ -56,15 +85,14 @@ export abstract class AbstractCoordinator {
             return
         }
         this.borders = this.getNewBorders(duration)
-        this.telechart.redraw()
     }
 
     protected getNewBorders(duration?: number) {
         const result = {
-            minX: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinX(this.currentRangeDisplay))),
-            maxX: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxX(this.currentRangeDisplay))),
-            minY: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinY(this.currentRangeDisplay)), 0),
-            maxY: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxY(this.currentRangeDisplay))),
+            minX: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinX(this.isRangeDisplay))),
+            maxX: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxX(this.isRangeDisplay))),
+            minY: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinY(this.isRangeDisplay)), 0),
+            maxY: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxY(this.isRangeDisplay))),
         }
         return {
             minX: duration && this.borders ? Telemation.create(this.borders.minX.value, result.minX, 100) : Telemation.create(result.minX),

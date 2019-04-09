@@ -1,6 +1,6 @@
 import { Telecolumn, ITelechartColumnData } from './Telecolumn'
 import { Telecanvas } from './Telecanvas'
-import { Telecoordinator } from './Telecoordinator'
+import { Teledisplay } from './Teledisplay'
 import { Teletip } from './Teletip'
 import { Telemap } from './Telemap'
 import { Telegend } from './Telegend'
@@ -32,7 +32,7 @@ export class Telechart {
     }
 
     public telecanvas!: Telecanvas
-    public telecoordinator!: Telecoordinator
+    public teledisplay!: Teledisplay
     public teletip!: Teletip
     public telemap!: Telemap
     public telegend!: Telegend
@@ -74,7 +74,7 @@ export class Telechart {
     set theme(value) {
         this.themeProperty = value
         this.teletip.theme = value
-        this.telecoordinator.theme = value
+        this.teledisplay.theme = value
         this.telemap.theme = value
         this.telegend.theme = value
         this.columns.forEach(c => c.theme = value)
@@ -84,7 +84,7 @@ export class Telechart {
     public addColumn(data: ITelechartColumnData) {
         const column = new Telecolumn(this, data)
         this.columns.push(column)
-        this.telecoordinator.addColumn(column)
+        this.teledisplay.addColumn(column)
         this.telemap.addColumn(column)
         this.telegend.addColumn(column)
     }
@@ -100,7 +100,7 @@ export class Telechart {
     }
 
     public removeTelecolumn(column: Telecolumn) {
-        this.telecoordinator.removeColumn(column)
+        this.teledisplay.removeColumn(column)
         this.telemap.removeColumn(column)
         this.telegend.removeColumn(column)
         this.columns.splice(this.columns.indexOf(column), 1)
@@ -142,7 +142,6 @@ export class Telechart {
             this.addColumn({ id, name: data.names[id], color: data.colors[id], values })
         }
         window.dispatchEvent(new Event('resize'))
-        this.telecoordinator.animate = true
     }
 
     protected initHTML() {
@@ -154,7 +153,7 @@ export class Telechart {
         this.telecanvas = new Telecanvas(this.element, this.config.height!)
 
         this.telemap = new Telemap(this)
-        this.telecoordinator = new Telecoordinator(this)
+        this.teledisplay = new Teledisplay(this)
         this.teletip = new Teletip(this, this.element)
         this.telegend = new Telegend(this, this.element)
 
@@ -186,7 +185,7 @@ export class Telechart {
         this.needRedraw = false
         this.telecanvas.clear()
         this.telemap.draw()
-        this.telecoordinator.draw()
+        this.teledisplay.draw()
         this.teletip.draw()
         this.telegend.draw()
         // this.needRedraw = true

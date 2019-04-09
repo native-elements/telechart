@@ -1,26 +1,26 @@
 import { Telechart } from './Telechart'
-import { AbstractCoordinator } from './AbstractCoordinator'
+import { AbstractChartDrawer } from './AbstractChartDrawer'
 import { Telecolumn } from './Telecolumn'
 import { Telecanvas } from './Telecanvas'
 import { Telemation } from './Telemation'
+import { SimpleChartDrawer } from './SimpleChartDrawer'
 
-export class Telemap extends AbstractCoordinator {
+export class Telemap {
     protected config!: { rangeBackground: string, rangeFill: string, shadow: string }
-    protected leftShadow!: HTMLElement
-    protected rightShadow!: HTMLElement
-    protected display!: HTMLElement
     protected rangeProperty: { from: Telemation, to: Telemation }|null = null
     protected topPadding = 0
     protected bottomPadding = 0
     protected cacheTeelcanvas: Telecanvas
     protected telecanvasCached = false
+    protected columns: Telecolumn[] = []
+    protected drawers: AbstractChartDrawer[] = []
     private themeProperty: 'light'|'dark' = 'light'
 
-    constructor(telechart: Telechart, public height = 38) {
-        super(telechart)
+    constructor(protected readonly telechart: Telechart, public height = 38) {
         this.theme = telechart.theme
         this.topPadding = this.telecanvas.height - height
         this.initHTML()
+        this.drawers.push(new SimpleChartDrawer(telechart))
         this.cacheTeelcanvas = new Telecanvas(null, this.height, this.telecanvas.width)
         window.addEventListener('resize', () => {
             this.cacheTeelcanvas.width = this.telecanvas.width
@@ -32,9 +32,19 @@ export class Telemap extends AbstractCoordinator {
         return this.telechart.telecanvas
     }
 
+    get firstDrawer() {
+        return this.drawers.length ? this.drawers[0] : undefined
+    }
+
     public addColumn(column: Telecolumn) {
-        super.addColumn(column)
+        this.columns.push(column)
+        this.drawers.forEach(d => d.addColumn(column))
         this.range = { from: .8, to: 1 }
+    }
+
+    public removeColumn(column: Telecolumn) {
+        this.columns.splice(this.columns.indexOf(column), 1)
+        this.drawers.forEach(d => d.removeColumn(column))
     }
 
     get theme() {
@@ -60,6 +70,26 @@ export class Telemap extends AbstractCoordinator {
         }
     }
 
+    set range(value: { from: number, to: number }|null) {
+        const current = this.range
+        this.rangeProperty = {
+            from: Telemation.create(current ? current.from : 0, value!.from, current ? 50 : 0),
+            to: Telemation.create(current ? current.to : 0, value!.to, current ? 50 : 0),
+        }
+        if (!this.firstDrawer) {
+            return
+        }
+        this.columns.forEach(c => c.setCurrentRange(
+            this.firstDrawer!.borders.minX.to + (this.firstDrawer!.borders.maxX.to - this.firstDrawer!.borders.minX.to) * value!.from,
+            this.firstDrawer!.borders.minX.to + (this.firstDrawer!.borders.maxX.to - this.firstDrawer!.borders.minX.to) * value!.to,
+        ))
+        this.telechart.teledisplay.recalcBorders(200)
+    }
+
+    get range(): { from: number, to: number }|null {
+        return this.rangeProperty ? { from: this.rangeProperty!.from.value, to: this.rangeProperty!.to.value } : null
+    }
+
     public draw() {
         const c = this.telecanvas
         const left = this.rangeProperty!.from.value * this.telecanvas.width
@@ -70,7 +100,11 @@ export class Telemap extends AbstractCoordinator {
         }
         if (!this.telecanvasCached) {
             this.cacheTeelcanvas.clear()
-            this.columns.forEach(col => this.drawColumn(col))
+            for (const drawer of this.drawers) {
+                drawer.topPadding = this.topPadding
+                drawer.bottomPadding = this.bottomPadding
+                drawer.draw()
+            }
             this.cacheTeelcanvas.drawTelecanvas(this.telecanvas, 0, -this.topPadding)
             this.telecanvasCached = true
             c.clear()
@@ -96,34 +130,9 @@ export class Telemap extends AbstractCoordinator {
         }
     }
 
-    set range(value: { from: number, to: number }|null) {
-        const current = this.range
-        this.rangeProperty = {
-            from: Telemation.create(current ? current.from : 0, value!.from, current ? 50 : 0),
-            to: Telemation.create(current ? current.to : 0, value!.to, current ? 50 : 0),
-        }
-        this.columns.forEach(c => c.setCurrentRange(
-            this.borders.minX.to + (this.borders.maxX.to - this.borders.minX.to) * value!.from,
-            this.borders.minX.to + (this.borders.maxX.to - this.borders.minX.to) * value!.to,
-        ))
-        this.telechart.telecoordinator.recalcBorders(200)
-    }
-
-    get range(): { from: number, to: number }|null {
-        return this.rangeProperty ? { from: this.rangeProperty!.from.value, to: this.rangeProperty!.to.value } : null
-    }
-
-    protected drawColumn(column: Telecolumn) {
-        if (column.opacity.value > 0) {
-            let opacity = Math.round(column.opacity.value * 255).toString(16)
-            if (opacity.length === 1) {
-                opacity = '0' + opacity
-            }
-            this.telecanvas.path(column.values
-                .map(v => [this.getCanvasX(v.x), this.getCanvasY(v.y)] as [number, number]),
-                column.color + opacity, column.width / 2,
-            )
-        }
+    public recalcBorders(duration: number = 0) {
+        this.drawers.forEach(d => d.recalcBorders(duration))
+        this.telechart.redraw()
     }
 
     protected initHTML() {
