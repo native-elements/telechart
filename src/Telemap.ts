@@ -95,7 +95,7 @@ export class Telemap {
         const left = this.rangeProperty!.from.value * this.telecanvas.width
         const width = (this.rangeProperty!.to.value - this.rangeProperty!.from.value) * this.telecanvas.width
 
-        if (this.columns.reduce((r, col) => !col.opacity.finished || r, false)) {
+        if (this.columns.reduce((r, col) => !col.opacity.finished || r, false) || !this.firstDrawer!.borders.maxY.finished) {
             this.telecanvasCached = false
         }
         if (!this.telecanvasCached) {
