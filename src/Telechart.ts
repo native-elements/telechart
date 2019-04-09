@@ -1,15 +1,20 @@
 import { Telecolumn, ITelechartColumnData } from './Telecolumn'
 import { Telecanvas } from './Telecanvas'
-import { Teledisplay } from './Teledisplay'
+import { AbstractTeledisplay } from './Display/AbstractTeledisplay'
 import { Teletip } from './Teletip'
-import { Telemap } from './Telemap'
+import { AbstractTelemap } from './Telemap/AbstractTelemap'
 import { Telegend } from './Telegend'
+import { SimpleTeledisplay } from './Display/SimpleTeledisplay'
+import { TwoAxisTeledisplay } from './Display/TwoAxisTeledisplay'
+import { SimpleTelemap } from './Telemap/SimpleTelemap'
+import { TwoAxisTelemap } from './Telemap/TwoAxisTelemap';
 
 interface ITelechartData {
     columns: Array<Array<string|number>>
     types: { [key: string]: 'line'|'x' }
     names: { [key: string]: string }
     colors: { [key: string]: string }
+    y_scaled: boolean
 }
 interface ITelechartOptions {
     data: ITelechartData
@@ -32,9 +37,9 @@ export class Telechart {
     }
 
     public telecanvas!: Telecanvas
-    public teledisplay!: Teledisplay
+    public teledisplay!: AbstractTeledisplay
     public teletip!: Teletip
-    public telemap!: Telemap
+    public telemap!: AbstractTelemap
     public telegend!: Telegend
     protected config!: ITelechartOptions
     protected columns: Telecolumn[] = []
@@ -54,7 +59,7 @@ export class Telechart {
             height: options.height ? options.height : 340,
         }
         this.initHTML()
-        this.updateData(options.data ? options.data : { columns: [], types: {}, names: {}, colors: {} })
+        this.updateData(options.data ? options.data : { columns: [], types: {}, names: {}, colors: {}, y_scaled: false })
         this.redraw()
     }
 
@@ -100,8 +105,12 @@ export class Telechart {
     }
 
     public removeTelecolumn(column: Telecolumn) {
-        this.teledisplay.removeColumn(column)
-        this.telemap.removeColumn(column)
+        if (this.teledisplay) {
+            this.teledisplay.removeColumn(column)
+        }
+        if (this.telemap) {
+            this.telemap.removeColumn(column)
+        }
         this.telegend.removeColumn(column)
         this.columns.splice(this.columns.indexOf(column), 1)
         this.redraw()
@@ -121,6 +130,13 @@ export class Telechart {
         let x: number[]
         this.removeColumns()
 
+        if (data.y_scaled) {
+            this.teledisplay = new TwoAxisTeledisplay(this)
+            this.telemap = new TwoAxisTelemap(this)
+        } else {
+            this.teledisplay = new SimpleTeledisplay(this)
+            this.telemap = new SimpleTelemap(this)
+        }
         for (const col of data.columns) {
             const id = col[0] as string
             const row: number[] = []
@@ -152,8 +168,6 @@ export class Telechart {
 
         this.telecanvas = new Telecanvas(this.element, this.config.height!)
 
-        this.telemap = new Telemap(this)
-        this.teledisplay = new Teledisplay(this)
         this.teletip = new Teletip(this, this.element)
         this.telegend = new Telegend(this, this.element)
 

@@ -1,50 +1,62 @@
 import { AbstractChartDrawer, IAbstractChartDrawerOptions } from './AbstractChartDrawer'
-import { Telecolumn } from './Telecolumn'
-import { Telechart} from './Telechart'
-import { Telemation } from './Telemation'
+import { Telecolumn } from '../Telecolumn'
+import { Telechart} from '../Telechart'
+import { Telemation } from '../Telemation'
+
+export interface ISimpleChartDrawerOptions extends IAbstractChartDrawerOptions {
+    noGuides?: boolean
+    noMilestones?: boolean
+}
 
 export class SimpleChartDrawer extends AbstractChartDrawer {
+    public noGuides: boolean
+    public noMilestones: boolean
     protected milestones: Array<{ x: number, title: string|null }> = []
     protected guides: Array<{ y: number, title: string, opacity: Telemation }> = []
 
-    constructor(telechart: Telechart, options?: IAbstractChartDrawerOptions) {
+    constructor(telechart: Telechart, options?: ISimpleChartDrawerOptions) {
         super(telechart, options)
+        this.noGuides = options && options.noGuides ? true : false
+        this.noMilestones = options && options.noMilestones ? true : false
     }
 
     public addColumn(column: Telecolumn) {
         super.addColumn(column)
-        if (this.isDrawXLabels) {
+        if (!this.noMilestones) {
             this.recalcMilestones()
         }
     }
 
     public removeColumn(column: Telecolumn) {
         super.removeColumn(column)
-        if (this.isDrawXLabels) {
+        if (!this.noMilestones) {
             this.recalcMilestones()
         }
     }
 
-    public draw() {
-        const c = this.telecanvas
-
-        if (this.isDrawXLabels) {
-            this.drawMilestones()
-        }
-        if (this.currentLineColor) {
-            this.drawCurrentLine()
-        }
-        if (this.axisColor) {
-            this.drawGuides()
-        }
+    public drawColumns() {
         this.columns.forEach(col => this.drawColumn(col))
-        this.columns.forEach(col => {
-            if (col.current) {
-                c.circle([this.getCanvasX(col.current.x), this.getCanvasY(col.current.y)], 4.5, col.color, col.config.background, col.width)
-            }
-        })
         if (!this.borders.maxX.finished || !this.borders.maxY.finished) {
             this.telechart.redraw()
+        }
+    }
+
+    public drawCurrentPoint() {
+        this.columns.forEach(col => {
+            if (col.current) {
+                this.telecanvas.circle([this.getCanvasX(col.current.x), this.getCanvasY(col.current.y)], 4.5, col.color, col.config.background, col.width)
+            }
+        })
+    }
+
+    public drawCurrentLine(color: string) {
+        const c = this.telecanvas
+        if (this.columns.length && this.columns[0].currentPoint) {
+            c.line(
+                [this.getCanvasX(this.columns[0].currentPoint.x), 0],
+                [this.getCanvasX(this.columns[0].currentPoint.x), c.height - this.bottomPadding],
+                color, 1,
+            )
         }
     }
 
@@ -81,51 +93,7 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
         }
     }
 
-    public recalcBorders(duration = 100) {
-        const old = this.borders ? this.borders.maxY.to : 0
-        super.recalcBorders(duration)
-        if (this.axisColor && old !== this.borders.maxY.to) {
-            this.recalcGuides(duration)
-        }
-    }
-
-    protected drawCurrentLine() {
-        const c = this.telecanvas
-        if (this.columns.length && this.columns[0].currentPoint) {
-            c.line(
-                [this.getCanvasX(this.columns[0].currentPoint.x), 0],
-                [this.getCanvasX(this.columns[0].currentPoint.x), c.height - this.bottomPadding],
-                this.currentLineColor!, 1,
-            )
-        }
-    }
-
-    protected recalcGuides(duration: number = 0) {
-        const c = this.telecanvas
-        if (!duration) {
-            this.guides = []
-        } else {
-            for (const g of this.guides) {
-                g.opacity = Telemation.create(g.opacity.value, 0, duration)
-            }
-        }
-        for (let n = 0; n < 6; n++) {
-            const y = this.getYValue(c.height - this.bottomPadding - (c.height - this.bottomPadding - this.topPadding) / 6 * n)
-            const title = n === 0 ? '0' : String(y - y % Math.pow(10, y.toString().length - 2))
-            this.guides.push({ y, title, opacity: duration ? Telemation.create(0, 1, duration) : Telemation.create(1) })
-        }
-    }
-
-    protected recalcMilestones() {
-        this.recalcBorders()
-        this.milestones = []
-        for (let x = this.borders.minX.to; x < this.borders.maxX.to; x += 60 * 60 * 24 * 1000) {
-            const value = { x, title: null }
-            this.milestones.push(value)
-        }
-    }
-
-    protected drawMilestones() {
+    public drawMilestones(textColor: string) {
         const c = this.telecanvas
         const dateWidth = 75
         const milestones = this.milestones.filter(m => {
@@ -163,11 +131,11 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
             }
             let color = Math.round(opacity * 255).toString(16)
             color = color.length < 2 ? '0' + color : color
-            c.text(m.title!, [x, c.height - this.bottomPadding + 18], this.axisTextColor + color, undefined, 11, 'center')
+            c.text(m.title!, [x, c.height - this.bottomPadding + 18], textColor + color, undefined, 11, 'center')
         })
     }
 
-    protected drawGuides() {
+    public drawGuides(lineColor: string|undefined, textColor?: string, textAlign: 'left'|'right' = 'left') {
         const c = this.telecanvas
         for (let n = this.guides.length - 1; n >= 0; n--) {
             const g = this.guides[n]
@@ -177,8 +145,52 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
                 this.guides.splice(n, 1)
             }
             opacity = opacity.length < 2 ? '0' + opacity : opacity
-            c.line([0, y], [c.width, y], this.axisColor + opacity, 1)
-            c.text(g.title, [0, y - 6], this.axisTextColor + opacity, undefined, 11)
+            if (lineColor) {
+                c.line([0, y], [c.width, y], lineColor + opacity, 1)
+            }
+            if (textColor) {
+                if (textAlign === 'left') {
+                    c.text(g.title, [0, y - 6], textColor + opacity, undefined, 11)
+                } else {
+                    c.text(g.title, [c.width, y - 6], textColor + opacity, undefined, 11, 'right')
+                }
+            }
+        }
+    }
+
+    public recalcBorders(duration = 100) {
+        if (this.columns.length === 0) {
+            return
+        }
+        const old = this.borders ? this.borders.maxY.to : 0
+        super.recalcBorders(duration)
+        if (!this.noGuides && old !== this.borders.maxY.to) {
+            this.recalcGuides(duration)
+        }
+    }
+
+    protected recalcGuides(duration: number = 0) {
+        const c = this.telecanvas
+        if (!duration) {
+            this.guides = []
+        } else {
+            for (const g of this.guides) {
+                g.opacity = Telemation.create(g.opacity.value, 0, duration)
+            }
+        }
+        for (let n = 0; n < 6; n++) {
+            const y = this.getYValue(c.height - this.bottomPadding - (c.height - this.bottomPadding - this.topPadding) / 6 * n)
+            const title = n === 0 ? '0' : String(y - y % Math.pow(10, y.toString().length - 2))
+            this.guides.push({ y, title, opacity: duration ? Telemation.create(0, 1, duration) : Telemation.create(1) })
+        }
+    }
+
+    protected recalcMilestones() {
+        this.recalcBorders()
+        this.milestones = []
+        for (let x = this.borders.minX.to; x < this.borders.maxX.to; x += 60 * 60 * 24 * 1000) {
+            const value = { x, title: null }
+            this.milestones.push(value)
         }
     }
 

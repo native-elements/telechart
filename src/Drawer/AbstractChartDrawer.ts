@@ -1,6 +1,6 @@
-import { Telechart } from './Telechart'
-import { Telecolumn } from './Telecolumn'
-import { Telemation } from './Telemation'
+import { Telechart } from '../Telechart'
+import { Telecolumn } from '../Telecolumn'
+import { Telemation } from '../Telemation'
 
 export interface IBorders {
     maxX: Telemation,
@@ -11,20 +11,10 @@ export interface IBorders {
 
 export interface IAbstractChartDrawerOptions {
     isRangeDisplay?: boolean
-    isDrawXLabels?: boolean
-    yLabelsPos?: 'left'|'right'|null
-    axisColor?: string|null
-    axisTextColor?: string
-    currentLineColor?: string
 }
 
 export abstract class AbstractChartDrawer {
-    public axisColor: string|null
-    public axisTextColor: string|null
-    public currentLineColor: string|null
     public isRangeDisplay = false
-    public isDrawXLabels = false
-    public yLabelsPos: 'left'|'right'|null = null
     public topPadding: number = 0
     public bottomPadding: number = 0
     public borders!: IBorders
@@ -33,14 +23,9 @@ export abstract class AbstractChartDrawer {
 
     constructor(protected readonly telechart: Telechart, options?: IAbstractChartDrawerOptions) {
         this.isRangeDisplay = options && options.isRangeDisplay ? true : false
-        this.isDrawXLabels = options && options.isDrawXLabels ? true : false
-        this.yLabelsPos = options && options.yLabelsPos ? options.yLabelsPos : null
-        this.axisColor = options && options.axisColor ? options.axisColor : null
-        this.axisTextColor = options && options.axisTextColor ? options.axisTextColor : null
-        this.currentLineColor = options && options.currentLineColor ? options.currentLineColor : null
     }
 
-    public abstract draw(): void
+    public abstract drawColumns(): void
 
     public abstract drawColumn(column: Telecolumn): void
 

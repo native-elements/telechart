@@ -1,11 +1,10 @@
-import { Telechart } from './Telechart'
-import { AbstractChartDrawer } from './AbstractChartDrawer'
-import { Telecolumn } from './Telecolumn'
-import { Telecanvas } from './Telecanvas'
-import { Telemation } from './Telemation'
-import { SimpleChartDrawer } from './SimpleChartDrawer'
+import { Telechart } from '../Telechart'
+import { AbstractChartDrawer } from '../Drawer/AbstractChartDrawer'
+import { Telecolumn } from '../Telecolumn'
+import { Telecanvas } from '../Telecanvas'
+import { Telemation } from '../Telemation'
 
-export class Telemap {
+export abstract class AbstractTelemap {
     protected config!: { rangeBackground: string, rangeFill: string, shadow: string }
     protected rangeProperty: { from: Telemation, to: Telemation }|null = null
     protected topPadding = 0
@@ -20,7 +19,6 @@ export class Telemap {
         this.theme = telechart.theme
         this.topPadding = this.telecanvas.height - height
         this.initHTML()
-        this.drawers.push(new SimpleChartDrawer(telechart))
         this.cacheTeelcanvas = new Telecanvas(null, this.height, this.telecanvas.width)
         window.addEventListener('resize', () => {
             this.cacheTeelcanvas.width = this.telecanvas.width
@@ -38,7 +36,6 @@ export class Telemap {
 
     public addColumn(column: Telecolumn) {
         this.columns.push(column)
-        this.drawers.forEach(d => d.addColumn(column))
         this.range = { from: .8, to: 1 }
     }
 
@@ -100,11 +97,7 @@ export class Telemap {
         }
         if (!this.telecanvasCached) {
             this.cacheTeelcanvas.clear()
-            for (const drawer of this.drawers) {
-                drawer.topPadding = this.topPadding
-                drawer.bottomPadding = this.bottomPadding
-                drawer.draw()
-            }
+            this.drawColumns()
             this.cacheTeelcanvas.drawTelecanvas(this.telecanvas, 0, -this.topPadding)
             this.telecanvasCached = true
             c.clear()
@@ -134,6 +127,8 @@ export class Telemap {
         this.drawers.forEach(d => d.recalcBorders(duration))
         this.telechart.redraw()
     }
+
+    protected abstract drawColumns(): void
 
     protected initHTML() {
         let currentPos = { left: 0, top: 0 }
