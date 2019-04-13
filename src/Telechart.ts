@@ -7,14 +7,17 @@ import { Telegend } from './Telegend'
 import { SimpleTeledisplay } from './Display/SimpleTeledisplay'
 import { TwoAxisTeledisplay } from './Display/TwoAxisTeledisplay'
 import { SimpleTelemap } from './Telemap/SimpleTelemap'
-import { TwoAxisTelemap } from './Telemap/TwoAxisTelemap';
+import { TwoAxisTelemap } from './Telemap/TwoAxisTelemap'
+import { StackedTeledisplay } from './Display/StackedTeledisplay'
+import { StackedTelemap } from './Telemap/StackedTelemap'
 
 interface ITelechartData {
     columns: Array<Array<string|number>>
     types: { [key: string]: 'line'|'x' }
     names: { [key: string]: string }
     colors: { [key: string]: string }
-    y_scaled: boolean
+    y_scaled?: boolean
+    stacked?: boolean
 }
 interface ITelechartOptions {
     data: ITelechartData
@@ -130,7 +133,10 @@ export class Telechart {
         let x: number[]
         this.removeColumns()
 
-        if (data.y_scaled) {
+        if (data.stacked) {
+            this.teledisplay = new StackedTeledisplay(this)
+            this.telemap = new StackedTelemap(this)
+        } else if (data.y_scaled) {
             this.teledisplay = new TwoAxisTeledisplay(this)
             this.telemap = new TwoAxisTelemap(this)
         } else {

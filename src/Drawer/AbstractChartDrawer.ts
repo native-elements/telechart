@@ -46,8 +46,10 @@ export abstract class AbstractChartDrawer {
         return Math.round((this.topPadding - canvasY) * (this.borders.maxY.to - this.borders.minY.to) / tHeight + this.borders.maxY.to)
     }
 
-    public getCanvasX(value: number) {
-        return (value - this.borders.minX.value) / (this.borders.maxX.value - this.borders.minX.value) * this.telecanvas.width
+    public getCanvasX(value: number, borders?: [number, number]) {
+        const min = borders ? borders[0] : this.borders.minX.value
+        const max = borders ? borders[1] : this.borders.maxX.value
+        return (value - min) / (max - min) * this.telecanvas.width
     }
 
     public getCanvasY(value: number) {
@@ -76,7 +78,7 @@ export abstract class AbstractChartDrawer {
         const result = {
             minX: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinX(this.isRangeDisplay))),
             maxX: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxX(this.isRangeDisplay))),
-            minY: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinY(this.isRangeDisplay)), 0),
+            minY: 0,
             maxY: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxY(this.isRangeDisplay))),
         }
         return {
@@ -85,6 +87,25 @@ export abstract class AbstractChartDrawer {
             minY: duration && this.borders ? Telemation.create(this.borders.minY.value, result.minY, duration) : Telemation.create(result.minY),
             maxY: duration && this.borders ? Telemation.create(this.borders.maxY.value, result.maxY, duration) : Telemation.create(result.maxY),
         }
+    }
+
+    protected getInDisplayColumnValues(column: Telecolumn, borders?: [number, number]) {
+        const allVals = column.currentValues
+        while (this.getCanvasX(allVals[0].x, borders) > 0) {
+            const prevIndex = column.values.indexOf(allVals[0]) - 1
+            if (prevIndex < 0) {
+                break
+            }
+            allVals.unshift(column.values[prevIndex])
+        }
+        while (this.getCanvasX(allVals[allVals.length - 1].x, borders) < this.telecanvas.width) {
+            const nextIndex = column.values.indexOf(allVals[allVals.length - 1]) + 1
+            if (nextIndex >= column.values.length) {
+                break
+            }
+            allVals.push(column.values[nextIndex])
+        }
+        return allVals
     }
 
 }

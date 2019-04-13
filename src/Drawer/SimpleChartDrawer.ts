@@ -41,7 +41,7 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
         }
     }
 
-    public drawCurrentPoint() {
+    public drawCurrentPoints() {
         this.columns.forEach(col => {
             if (col.current) {
                 this.telecanvas.circle([this.getCanvasX(col.current.x), this.getCanvasY(col.current.y)], 4.5, col.color, col.config.background, col.width)
@@ -65,22 +65,7 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
             return
         }
         const c = this.telecanvas
-
-        const allVals = column.currentValues
-        while (this.getCanvasX(allVals[0].x) > 0) {
-            const prevIndex = column.values.indexOf(allVals[0]) - 1
-            if (prevIndex < 0) {
-                break
-            }
-            allVals.unshift(column.values[prevIndex])
-        }
-        while (this.getCanvasX(allVals[allVals.length - 1].x) < this.telecanvas.width) {
-            const nextIndex = column.values.indexOf(allVals[allVals.length - 1]) + 1
-            if (nextIndex >= column.values.length) {
-                break
-            }
-            allVals.push(column.values[nextIndex])
-        }
+        const allVals = this.getInDisplayColumnValues(column)
         if (allVals.length) {
             let opacity = Math.round(column.opacity.value * 255).toString(16)
             if (opacity.length === 1) {

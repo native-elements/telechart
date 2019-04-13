@@ -43,7 +43,7 @@ export class TwoAxisTeledisplay extends AbstractTeledisplay {
         for (let n = 0; n < this.drawers.length; n++) {
             const drawer = this.drawers[n] as SimpleChartDrawer
             drawer.drawGuides(undefined, this.columns[n].color, n === 0 ? 'left' : 'right')
-            drawer.drawCurrentPoint()
+            drawer.drawCurrentPoints()
         }
         this.updateTeletip()
     }

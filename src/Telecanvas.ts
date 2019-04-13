@@ -61,6 +61,30 @@ export class Telecanvas {
         this.canvas.style.cursor = value
     }
 
+    public save() {
+        this.context.save()
+    }
+
+    public setRoundedClippingRect(left: number, top: number, width: number, height: number, radius: number) {
+        const c = this.context
+        c.beginPath()
+        c.moveTo(left + radius, top)
+        c.lineTo(left + width - radius, top)
+        c.quadraticCurveTo(left + width, top, left + width, top + radius)
+        c.lineTo(left + width, top + height - radius)
+        c.quadraticCurveTo(left + width, top + height, left + width - radius, top + height)
+        c.lineTo(left + radius, top + height)
+        c.quadraticCurveTo(left, top + height, left, top + height - radius)
+        c.lineTo(left, top + radius)
+        c.quadraticCurveTo(left, top, left + radius, top)
+        c.closePath()
+        c.clip('nonzero')
+    }
+
+    public restore() {
+        this.context.restore()
+    }
+
     public line(from: Coordinate, to: Coordinate, color: string, width = 1) {
         const c = this.context
         c.lineCap = 'butt'
@@ -109,18 +133,29 @@ export class Telecanvas {
         c.fillText(text, to[0], to[1])
     }
 
+    public shape(path: Array<[number, number]>, color: string) {
+        const c = this.context
+        c.fillStyle = color
+        c.beginPath()
+        c.moveTo(path[0][0], path[0][1])
+        for (let n = 1; n < path.length; n++) {
+            c.lineTo(path[n][0], path[n][1])
+        }
+        c.closePath()
+        c.fill()
+    }
+
     public rect(left: number, top: number, width: number, height: number, fill?: string, stroke?: string, borderWidth?: number) {
         const c = this.context
         c.beginPath()
-        c.rect(left, top, width, height)
         if (fill) {
             c.fillStyle = fill
-            c.fill()
+            c.fillRect(left, top, width, height)
         }
         if (stroke) {
             c.strokeStyle = stroke
             c.lineWidth = borderWidth!
-            c.stroke()
+            c.strokeRect(left, top, width, height)
         }
     }
 

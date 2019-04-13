@@ -102,10 +102,12 @@ export abstract class AbstractTelemap {
             this.telecanvasCached = true
             c.clear()
         }
+        c.save()
+        c.setRoundedClippingRect(0, this.topPadding, c.width, this.height, 6)
         c.drawTelecanvas(this.cacheTeelcanvas, 0, this.topPadding)
 
-        c.roundedRect(0, this.topPadding, left + 6, this.height, 6, this.config.shadow) // Shadow to left
-        c.roundedRect(left + width - 6, this.topPadding, this.telecanvas.width - left - width + 6, this.height, 6, this.config.shadow) // Shadow to right
+        c.rect(0, this.topPadding, left + 6, this.height, this.config.shadow) // Shadow to left
+        c.rect(left + width - 6, this.topPadding, this.telecanvas.width - left - width + 6, this.height, this.config.shadow) // Shadow to right
 
         c.roundedRect(left, this.topPadding, 10, this.height, 6, this.config.rangeBackground) // Left gripper corners
         c.rect(left + 5, this.topPadding, 5, this.height, this.config.rangeBackground) // Left gripper rect
@@ -115,8 +117,9 @@ export abstract class AbstractTelemap {
         c.rect(left + width - 10, this.topPadding, 5, this.height, this.config.rangeBackground) // Right gripper rect
         c.roundedRect(left + width - 6, this.topPadding + 13, 2, 12, 2, this.config.rangeFill) // Right gripper strip
 
-        c.line([left + 10 - 1, this.topPadding], [left + width - 10, this.topPadding], this.config.rangeBackground)
-        c.line([left + 10 - 1, this.topPadding + this.height - 1], [left + width - 10, this.topPadding + this.height - 1], this.config.rangeBackground)
+        c.line([left + 10 - 1, this.topPadding], [left + width - 10 + 1, this.topPadding], this.config.rangeBackground)
+        c.line([left + 10 - 1, this.topPadding + this.height - 1], [left + width - 10 + 1, this.topPadding + this.height - 1], this.config.rangeBackground)
+        c.restore()
 
         if (!this.rangeProperty!.to.finished) {
             this.telechart.redraw()
@@ -184,11 +187,11 @@ export abstract class AbstractTelemap {
                 }
                 newRangeTo = 1
             }
-            if (newRangeTo - newRangeFrom < 0.05) {
+            if (newRangeTo - newRangeFrom < 0.1) {
                 if (moveType === 'to') {
-                    newRangeTo = newRangeFrom + 0.05
+                    newRangeTo = newRangeFrom + 0.1
                 } else {
-                    newRangeFrom = newRangeTo - 0.05
+                    newRangeFrom = newRangeTo - 0.1
                 }
             }
             this.range = { from: newRangeFrom, to: newRangeTo }
@@ -200,6 +203,7 @@ export abstract class AbstractTelemap {
             }
         }
         const mouseup = () => {
+            moveType = null
             startPos = null
             startRange = null
         }

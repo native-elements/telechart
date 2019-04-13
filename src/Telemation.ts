@@ -13,9 +13,27 @@ export class Telemation {
     public finished: boolean
     protected start: number
 
-    constructor(public readonly from: number, public readonly to: number, protected readonly duration: number) {
+    constructor(public from: number, public to: number, protected duration: number) {
         this.start = Date.now()
         this.finished = !duration
+    }
+
+    public update(to: number): Telemation
+    public update(from: number, to: number, duration: number): Telemation
+
+    public update(a: number, b?: number, c?: number): Telemation {
+        if (arguments.length === 1) {
+            this.from = 0
+            this.to = a
+            this.duration = 0
+        } else {
+            this.from = a
+            this.to = b!
+            this.duration = c!
+        }
+        this.finished = !this.duration
+
+        return this
     }
 
     get value() {

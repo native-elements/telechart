@@ -30,7 +30,7 @@ export class SimpleTeledisplay extends AbstractTeledisplay {
             drawer.drawGuides(axisColor)
             drawer.drawColumns()
             drawer.drawGuides(undefined, textColor)
-            drawer.drawCurrentPoint()
+            drawer.drawCurrentPoints()
         }
         this.updateTeletip()
     }
