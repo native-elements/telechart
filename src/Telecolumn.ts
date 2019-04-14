@@ -58,7 +58,7 @@ export class Telecolumn {
     set visible(value: boolean) {
         if (value !== this.visibleProperty) {
             this.visibleProperty = value
-            this.opacity = value ? Telemation.create(0, 1, 150) : Telemation.create(1, 0, 150)
+            this.opacity = value ? Telemation.create(0, 1, 200) : Telemation.create(1, 0, 200)
         }
     }
 

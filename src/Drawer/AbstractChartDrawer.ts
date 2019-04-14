@@ -11,10 +11,12 @@ export interface IBorders {
 
 export interface IAbstractChartDrawerOptions {
     isRangeDisplay?: boolean
+    isZeroStart?: boolean
 }
 
 export abstract class AbstractChartDrawer {
     public isRangeDisplay = false
+    public isZeroStart = false
     public topPadding: number = 0
     public bottomPadding: number = 0
     public borders!: IBorders
@@ -23,6 +25,7 @@ export abstract class AbstractChartDrawer {
 
     constructor(protected readonly telechart: Telechart, options?: IAbstractChartDrawerOptions) {
         this.isRangeDisplay = options && options.isRangeDisplay ? true : false
+        this.isZeroStart = options && options.isZeroStart ? true : false
     }
 
     public abstract drawColumns(): void
@@ -52,9 +55,11 @@ export abstract class AbstractChartDrawer {
         return (value - min) / (max - min) * this.telecanvas.width
     }
 
-    public getCanvasY(value: number) {
+    public getCanvasY(value: number, borders?: [number, number]) {
+        const min = borders ? borders[0] : this.borders.minY.value
+        const max = borders ? borders[1] : this.borders.maxY.value
         const tHeight = this.telecanvas.height - (this.bottomPadding + this.topPadding)
-        return tHeight - (value - this.borders.minY.value) / (this.borders.maxY.value - this.borders.minY.value) * tHeight + this.topPadding
+        return tHeight - (value - min) / (max - min) * tHeight + this.topPadding
     }
 
     public addColumn(column: Telecolumn) {
@@ -78,7 +83,7 @@ export abstract class AbstractChartDrawer {
         const result = {
             minX: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinX(this.isRangeDisplay))),
             maxX: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxX(this.isRangeDisplay))),
-            minY: 0,
+            minY: this.isZeroStart ? 0 : Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinY(this.isRangeDisplay))),
             maxY: Math.max(...this.columns.filter(c => c.visible).map(c => c.getMaxY(this.isRangeDisplay))),
         }
         return {

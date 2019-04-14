@@ -6,8 +6,10 @@ export class Telecanvas {
     private mouseMoveListeners: MouseMoveListener[] = []
     private mouseDownListeners: Array<(x: number, y: number) => void> = []
     private mouseUpListeners: Array<() => void> = []
+    private resizeListeners: Array<() => void> = []
     private canvas: HTMLCanvasElement
     private context: CanvasRenderingContext2D
+    private cachedDpr?: number
 
     constructor(parentElement: HTMLElement|null, public height: number, width?: number) {
         this.canvas = document.createElement('canvas')
@@ -21,10 +23,17 @@ export class Telecanvas {
         this.canvas.height = height * this.dpr
         this.canvas.style.height = `${height}px`
         this.context = this.canvas.getContext('2d')!
-        window.addEventListener('resize', () => {
-            this.width = width ? width : parentElement!.clientWidth
-        })
-        window.dispatchEvent(new Event('resize'))
+        if (!width) {
+            window.addEventListener('resize', () => {
+                if (this.width !== (width ? width : parentElement!.clientWidth)) {
+                    this.width = width ? width : parentElement!.clientWidth
+                    this.resizeListeners.forEach(l => l())
+                }
+            })
+            window.dispatchEvent(new Event('resize'))
+        } else {
+            this.width = width
+        }
 
         const mousemove = (x: number, y: number) => {
             const rect = this.canvas.getBoundingClientRect()
@@ -47,14 +56,15 @@ export class Telecanvas {
     }
 
     set width(value: number) {
+        this.cachedDpr = undefined
         this.widthProperty = value
         this.canvas.width = value * this.dpr
-        this.canvas.style.width = `${value}px`
+        this.canvas.style.width = `100%`
         this.context.scale(this.dpr, this.dpr)
     }
 
     get dpr() {
-        return window.devicePixelRatio || 1
+        return this.cachedDpr ? this.cachedDpr : window.devicePixelRatio || 1
     }
 
     set cursor(value: string) {
@@ -78,7 +88,15 @@ export class Telecanvas {
         c.lineTo(left, top + radius)
         c.quadraticCurveTo(left, top, left + radius, top)
         c.closePath()
-        c.clip('nonzero')
+        c.clip()
+    }
+
+    public setClippingRect(left: number, top: number, width: number, height: number) {
+        const c = this.context
+        c.beginPath()
+        c.rect(left, top, width, height)
+        c.closePath()
+        c.clip()
     }
 
     public restore() {
@@ -205,6 +223,10 @@ export class Telecanvas {
 
     public addMouseUpListener(callback: () => void) {
         this.mouseUpListeners.push(callback)
+    }
+
+    public addResizeListener(callback: () => void) {
+        this.resizeListeners.push(callback)
     }
 
 }

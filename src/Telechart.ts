@@ -10,14 +10,17 @@ import { SimpleTelemap } from './Telemap/SimpleTelemap'
 import { TwoAxisTelemap } from './Telemap/TwoAxisTelemap'
 import { StackedTeledisplay } from './Display/StackedTeledisplay'
 import { StackedTelemap } from './Telemap/StackedTelemap'
+import { StackedPercentTeledisplay } from './Display/StackedPercentTeledisplay'
+import { StackedPercentTelemap } from './Telemap/StackedPercentTelemap'
 
 interface ITelechartData {
     columns: Array<Array<string|number>>
-    types: { [key: string]: 'line'|'x' }
+    types: { [key: string]: 'line'|'bar'|'x' }
     names: { [key: string]: string }
     colors: { [key: string]: string }
     y_scaled?: boolean
     stacked?: boolean
+    percentage?: boolean
 }
 interface ITelechartOptions {
     data: ITelechartData
@@ -131,11 +134,24 @@ export class Telechart {
 
     public updateData(data: ITelechartData) {
         let x: number[]
+        let hasBar = false
         this.removeColumns()
 
-        if (data.stacked) {
-            this.teledisplay = new StackedTeledisplay(this)
-            this.telemap = new StackedTelemap(this)
+        for (const key in data.types) {
+            if (data.types[key] === 'bar') {
+                hasBar = true
+                break
+            }
+        }
+
+        if (data.stacked || hasBar) {
+            if (data.percentage) {
+                this.teledisplay = new StackedPercentTeledisplay(this)
+                this.telemap = new StackedPercentTelemap(this)
+            } else {
+                this.teledisplay = new StackedTeledisplay(this)
+                this.telemap = new StackedTelemap(this)
+            }
         } else if (data.y_scaled) {
             this.teledisplay = new TwoAxisTeledisplay(this)
             this.telemap = new TwoAxisTelemap(this)
@@ -177,7 +193,7 @@ export class Telechart {
         this.teletip = new Teletip(this, this.element)
         this.telegend = new Telegend(this, this.element)
 
-        window.addEventListener('resize', () => this.redraw())
+        this.telecanvas.addResizeListener(() => this.redraw())
 
         let frames = 0
         let start = Date.now()

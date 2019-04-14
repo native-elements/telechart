@@ -1,19 +1,30 @@
-import { SimpleChartDrawer } from './SimpleChartDrawer'
+import { SimpleChartDrawer, ISimpleChartDrawerOptions } from './SimpleChartDrawer'
 import { Telecolumn } from '../Telecolumn'
 import { Telemation } from '../Telemation'
+import { Telechart } from '../Telechart'
+
+interface IStackedChartDrawerOptions extends ISimpleChartDrawerOptions {
+    noCurrent?: boolean
+}
 
 export class StackedChartDrawer extends SimpleChartDrawer {
     public valuesLength = 0
+    public noCurrent: boolean
+
+    constructor(telechart: Telechart, options?: IStackedChartDrawerOptions) {
+        super(telechart, options)
+        this.noCurrent = options && options.noCurrent ? true : false
+    }
 
     get currentPoint() {
-        if (this.columns.length && this.columns[0].currentPoint) {
+        if (!this.noCurrent && this.columns.length && this.columns[0].currentPoint) {
             return this.columns[0].currentPoint.x
         }
     }
 
     public drawColumns() {
         let prev: number[]|undefined
-        const borders = [this.borders.minX.value, this.borders.maxX.value] as [number, number]
+        const borders = { minX: this.borders.minX.value, maxX: this.borders.maxX.value, minY: 0, maxY: this.borders.maxY.value }
         for (const col of this.columns) {
             const result = this.drawColumn(col, prev, borders)
             if (result && !prev) {
@@ -29,12 +40,14 @@ export class StackedChartDrawer extends SimpleChartDrawer {
         }
     }
 
-    public drawColumn(column: Telecolumn, prev?: number[], borders?: [number, number]): number[]|undefined {
+    public drawColumn(column: Telecolumn, prev?: number[], borders?: { minX: number, maxX: number, minY: number, maxY: number }): number[]|undefined {
         if (!column.opacity.value) {
             return
         }
         const c = this.telecanvas
-        const allVals = this.getInDisplayColumnValues(column, borders)
+        const horBorders = borders ? [borders.minX, borders.maxX] as [number, number] : undefined
+        const verBorders = borders ? [borders.minY, borders.maxY] as [number, number] : undefined
+        const allVals = this.getInDisplayColumnValues(column, horBorders)
         if (allVals.length) {
             const currentPoint = this.currentPoint
             const colOpacityVal = column.opacity.value
@@ -48,14 +61,14 @@ export class StackedChartDrawer extends SimpleChartDrawer {
             let current: Array<[number, number]>|undefined
             this.valuesLength = allVals.length
             for (let n = 0; n < allVals.length; n++) {
-                const x = this.getCanvasX(allVals[n].x, borders)
+                const x = this.getCanvasX(allVals[n].x, horBorders)
                 const ySt = this.getCanvasY(0)
-                let height = ySt - this.getCanvasY(allVals[n].y)
+                let height = ySt - this.getCanvasY(allVals[n].y, verBorders)
                 if (colOpacityVal < 1) {
                     height *= colOpacityVal
                 }
                 const y = ySt - height - (prev ? prev[n] : 0)
-                if (height < 2) {
+                if (colOpacityVal === 1 && height < 2) {
                     height = 2
                 }
                 if (n) {
@@ -66,7 +79,7 @@ export class StackedChartDrawer extends SimpleChartDrawer {
                 valsPrep.push({ x, y, height })
                 result.push(height)
                 if (allVals[n].x === currentPoint) {
-                    current = [[x, y], [n + 1 < allVals.length ? this.getCanvasX(allVals[n + 1].x, borders) : x + 30, y]]
+                    current = [[x, y], [n + 1 < allVals.length ? this.getCanvasX(allVals[n + 1].x, horBorders) : x + 30, y]]
                     current.push([current[current.length - 1][0], y + height])
                     current.push([x, y + height])
                 }

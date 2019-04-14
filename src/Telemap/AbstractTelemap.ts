@@ -20,7 +20,7 @@ export abstract class AbstractTelemap {
         this.topPadding = this.telecanvas.height - height
         this.initHTML()
         this.cacheTeelcanvas = new Telecanvas(null, this.height, this.telecanvas.width)
-        window.addEventListener('resize', () => {
+        this.telecanvas.addResizeListener(() => {
             this.cacheTeelcanvas.width = this.telecanvas.width
             this.telecanvasCached = false
         })

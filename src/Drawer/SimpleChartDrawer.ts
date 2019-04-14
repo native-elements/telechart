@@ -11,6 +11,7 @@ export interface ISimpleChartDrawerOptions extends IAbstractChartDrawerOptions {
 export class SimpleChartDrawer extends AbstractChartDrawer {
     public noGuides: boolean
     public noMilestones: boolean
+    protected guidesCount = 6
     protected milestones: Array<{ x: number, title: string|null }> = []
     protected guides: Array<{ y: number, title: string, opacity: Telemation }> = []
 
@@ -35,8 +36,12 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
     }
 
     public drawColumns() {
+        const c = this.telecanvas
+        c.save()
+        c.setClippingRect(0, 0, c.width, c.height - this.bottomPadding + 30)
         this.columns.forEach(col => this.drawColumn(col))
-        if (!this.borders.maxX.finished || !this.borders.maxY.finished) {
+        c.restore()
+        if (!this.borders.maxX.finished || !this.borders.maxY.finished || (!this.isZeroStart && !this.borders.minY.finished)) {
             this.telechart.redraw()
         }
     }
@@ -122,6 +127,8 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
 
     public drawGuides(lineColor: string|undefined, textColor?: string, textAlign: 'left'|'right' = 'left') {
         const c = this.telecanvas
+        c.save()
+        c.setClippingRect(0, 0, c.width, c.height - this.bottomPadding + 30)
         for (let n = this.guides.length - 1; n >= 0; n--) {
             const g = this.guides[n]
             const y = this.getCanvasY(g.y)
@@ -141,15 +148,17 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
                 }
             }
         }
+        c.restore()
     }
 
     public recalcBorders(duration = 100) {
         if (this.columns.length === 0) {
             return
         }
-        const old = this.borders ? this.borders.maxY.to : 0
+        const oldMax = this.borders ? this.borders.maxY.to : 0
+        const oldMin = this.borders ? this.borders.minY.to : 0
         super.recalcBorders(duration)
-        if (!this.noGuides && old !== this.borders.maxY.to) {
+        if (!this.noGuides && (oldMax !== this.borders.maxY.to || oldMin !== this.borders.minY.to)) {
             this.recalcGuides(duration)
         }
     }
@@ -163,9 +172,9 @@ export class SimpleChartDrawer extends AbstractChartDrawer {
                 g.opacity = Telemation.create(g.opacity.value, 0, duration)
             }
         }
-        for (let n = 0; n < 6; n++) {
-            const y = this.getYValue(c.height - this.bottomPadding - (c.height - this.bottomPadding - this.topPadding) / 6 * n)
-            const title = n === 0 ? '0' : String(y - y % Math.pow(10, y.toString().length - 2))
+        for (let n = 0; n < this.guidesCount; n++) {
+            const y = this.getYValue(c.height - this.bottomPadding - (c.height - this.bottomPadding - this.topPadding) / this.guidesCount * n)
+            const title = String(y - y % Math.pow(10, y.toString().length - 2))
             this.guides.push({ y, title, opacity: duration ? Telemation.create(0, 1, duration) : Telemation.create(1) })
         }
     }
