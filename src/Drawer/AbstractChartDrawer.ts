@@ -14,6 +14,8 @@ export interface IAbstractChartDrawerOptions {
     isZeroStart?: boolean
     noGuides?: boolean
     noMilestones?: boolean
+    topPadding?: number
+    bottomPadding?: number
 }
 
 export abstract class AbstractChartDrawer {
@@ -34,6 +36,8 @@ export abstract class AbstractChartDrawer {
         this.isZeroStart = options && options.isZeroStart ? true : false
         this.noGuides = options && options.noGuides ? true : false
         this.noMilestones = options && options.noMilestones ? true : false
+        this.topPadding = options && options.topPadding ? options.topPadding : 0
+        this.bottomPadding = options && options.bottomPadding ? options.bottomPadding : 0
     }
 
     public abstract drawColumns(): void

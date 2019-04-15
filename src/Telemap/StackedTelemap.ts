@@ -7,7 +7,7 @@ export class StackedTelemap extends AbstractTelemap {
 
     constructor(telechart: Telechart) {
         super(telechart)
-        this.drawers.push(new StackedChartDrawer(telechart, { noGuides: true, noMilestones: true }))
+        this.drawers.push(new StackedChartDrawer(telechart, { noGuides: true, noMilestones: true, topPadding: this.topPadding, bottomPadding: this.bottomPadding }))
     }
 
     public addColumn(column: Telecolumn) {
@@ -17,8 +17,6 @@ export class StackedTelemap extends AbstractTelemap {
 
     protected drawColumns() {
         for (const drawer of this.drawers) {
-            drawer.topPadding = this.topPadding
-            drawer.bottomPadding = this.bottomPadding
             drawer.drawColumns()
         }
     }

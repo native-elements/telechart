@@ -7,7 +7,7 @@ export class LineTeledisplay extends AbstractTeledisplay {
 
     constructor(telechart: Telechart) {
         super(telechart)
-        this.drawers.push(new LineChartDrawer(telechart, { isRangeDisplay: true, lineWidth: 2 }))
+        this.drawers.push(new LineChartDrawer(telechart, { isRangeDisplay: true, lineWidth: 2, topPadding: 15, bottomPadding: 40 + this.telechart.telemap.height }))
     }
 
     public addColumn(column: Telecolumn) {
@@ -19,12 +19,8 @@ export class LineTeledisplay extends AbstractTeledisplay {
         if (!this.firstDrawer) {
             return
         }
-        this.firstDrawer.topPadding = 30
-        this.firstDrawer.bottomPadding = 40 + this.telechart.telemap.height
         this.firstDrawer.drawGuides(this.axisColor)
         for (const drawer of this.drawers as LineChartDrawer[]) {
-            drawer.topPadding = 30
-            drawer.bottomPadding = 40 + this.telechart.telemap.height
             drawer.drawMilestones(this.axisTextColor)
             drawer.drawCurrentLine(this.lineColor)
             drawer.drawColumns()

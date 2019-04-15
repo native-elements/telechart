@@ -10,7 +10,7 @@ export class StackedPercentTeledisplay extends AbstractTeledisplay {
 
     constructor(telechart: Telechart) {
         super(telechart)
-        this.drawers.push(new StackedPercentChartDrawer(telechart, { isRangeDisplay: true }))
+        this.drawers.push(new StackedPercentChartDrawer(telechart, { isRangeDisplay: true, topPadding: 15, bottomPadding: 40 + this.telechart.telemap.height }))
     }
 
     public addColumn(column: Telecolumn) {
@@ -26,8 +26,6 @@ export class StackedPercentTeledisplay extends AbstractTeledisplay {
         const c = this.telecanvas
         c.text('100%', [0, this.firstDrawer.topPadding - 6], textColor, undefined, 11)
         for (const drawer of this.drawers as StackedPercentChartDrawer[]) {
-            drawer.topPadding = 30
-            drawer.bottomPadding = 40 + this.telechart.telemap.height
             drawer.drawMilestones(this.axisTextColor)
             drawer.drawColumns()
             drawer.drawGuides(this.axisColor, textColor, undefined, (label) => label + '%')

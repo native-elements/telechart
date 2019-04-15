@@ -7,8 +7,8 @@ export class TwoAxisTeledisplay extends AbstractTeledisplay {
 
     constructor(telechart: Telechart) {
         super(telechart)
-        this.drawers.push(new LineChartDrawer(telechart, { isRangeDisplay: true, lineWidth: 2 }))
-        this.drawers.push(new LineChartDrawer(telechart, { isRangeDisplay: true, noMilestones: true, lineWidth: 2 }))
+        this.drawers.push(new LineChartDrawer(telechart, { isRangeDisplay: true, lineWidth: 2, topPadding: 15, bottomPadding: 40 + this.telechart.telemap.height }))
+        this.drawers.push(new LineChartDrawer(telechart, { isRangeDisplay: true, noMilestones: true, lineWidth: 2, topPadding: 15, bottomPadding: 40 + this.telechart.telemap.height }))
     }
 
     public addColumn(column: Telecolumn) {
@@ -26,8 +26,6 @@ export class TwoAxisTeledisplay extends AbstractTeledisplay {
         }
         for (let n = 0; n < this.drawers.length; n++) {
             const drawer = this.drawers[n] as LineChartDrawer
-            drawer.topPadding = 30
-            drawer.bottomPadding = 40 + this.telechart.telemap.height
             if (n === 0) {
                 drawer.drawMilestones(this.axisTextColor)
                 drawer.drawCurrentLine(this.lineColor)

@@ -8,7 +8,7 @@ export class StackedTeledisplay extends AbstractTeledisplay {
 
     constructor(telechart: Telechart) {
         super(telechart)
-        this.drawers.push(new StackedChartDrawer(telechart, { isRangeDisplay: true }))
+        this.drawers.push(new StackedChartDrawer(telechart, { isRangeDisplay: true, topPadding: 15, bottomPadding: 40 + this.telechart.telemap.height }))
     }
 
     public addColumn(column: Telecolumn) {
@@ -21,8 +21,6 @@ export class StackedTeledisplay extends AbstractTeledisplay {
             return
         }
         for (const drawer of this.drawers as StackedChartDrawer[]) {
-            drawer.topPadding = 30
-            drawer.bottomPadding = 40 + this.telechart.telemap.height
             drawer.drawMilestones(this.axisTextColor)
             drawer.drawColumns()
             drawer.drawGuides(this.axisColor, this.theme === 'dark' ? '#ECF2F87F' : '#2525297F')

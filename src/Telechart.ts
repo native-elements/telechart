@@ -26,6 +26,7 @@ interface ITelechartOptions {
     data: ITelechartData
     height?: number
     title?: string
+    showFps?: boolean
 }
 
 export class Telechart {
@@ -52,6 +53,7 @@ export class Telechart {
         data: ITelechartData,
         height: number,
         title: string,
+        showFps: boolean,
     }
     protected loaded = false
     protected columns: Telecolumn[] = []
@@ -70,8 +72,9 @@ export class Telechart {
         }
         this.config = {
             data: options.data,
-            height: options.height ? options.height : 400,
+            height: options.height ? options.height : 360,
             title: options.title ? options.title : 'Untitled chart',
+            showFps: options.showFps ? true : false,
         }
         this.initHTML()
         this.updateData(options.data ? options.data : { columns: [], types: {}, names: {}, colors: {}, y_scaled: false })
@@ -163,18 +166,18 @@ export class Telechart {
 
         if (data.stacked || hasBar) {
             if (data.percentage) {
-                this.teledisplay = new StackedPercentTeledisplay(this)
                 this.telemap = new StackedPercentTelemap(this)
+                this.teledisplay = new StackedPercentTeledisplay(this)
             } else {
-                this.teledisplay = new StackedTeledisplay(this)
                 this.telemap = new StackedTelemap(this)
+                this.teledisplay = new StackedTeledisplay(this)
             }
         } else if (data.y_scaled) {
-            this.teledisplay = new TwoAxisTeledisplay(this)
             this.telemap = new TwoAxisTelemap(this)
+            this.teledisplay = new TwoAxisTeledisplay(this)
         } else {
-            this.teledisplay = new LineTeledisplay(this)
             this.telemap = new LineTelemap(this)
+            this.teledisplay = new LineTeledisplay(this)
         }
         for (const col of data.columns) {
             const id = col[0] as string
@@ -260,7 +263,7 @@ export class Telechart {
                 fps = 1 / ((Date.now() - start) / 1000 / 30)
                 start = Date.now()
             }
-            if (needRedraw || frames % 50 === 0) {
+            if (this.config.showFps && (needRedraw || frames % 10 === 0)) {
                 this.telecanvas.rect(2, 2, 30, 10, '#fff')
                 this.telecanvas.text('fps ' + fps.toFixed(0), [3, 10], '#000', 'sans', 9)
             }
@@ -279,7 +282,6 @@ export class Telechart {
         this.teledisplay.draw()
         this.teletip.draw()
         this.telegend.draw()
-        // this.needRedraw = true
     }
 
 }
