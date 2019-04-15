@@ -69,7 +69,10 @@ export abstract class AbstractTeledisplay {
                 this.telechart.teletip.hide()
             } else {
                 this.telechart.teletip.setContent(this.getTeletipContent(curColumns))
-                this.telechart.teletip.setCoordinates([this.firstDrawer!.getCanvasX(curColumns[0]!.currentPoint!.x), 0])
+                this.telechart.teletip.setCoordinates([
+                    this.firstDrawer!.getCanvasX(curColumns[0]!.currentPoint!.x),
+                    this.firstDrawer!.getCanvasY(Math.max(...curColumns.map(c => c.currentPoint!.y))),
+                ])
                 this.telechart.teletip.show()
             }
         } else {

@@ -38,16 +38,23 @@ export class Teletip {
     }
 
     public setCoordinates(value: [number, number]) {
-        let left = value[0] - 20
-        if (left < 0) {
-            left = 0
-        }
         this.element.style.display = 'block'
-        if (left + this.element.offsetWidth > this.parentElement.clientWidth) {
-            left = this.parentElement.clientWidth - this.element.offsetWidth
+        const width = this.element.offsetWidth
+        const height = this.element.offsetHeight
+        const parentWidth = this.parentElement.clientWidth
+        let top = value[1] - height + 33 /*header height*/ - 15
+        let left = value[0] - width - 15
+        if (top < 33) {
+            top = 33
+        }
+        if (left < 0) {
+            left = value[0] + 15
+        }
+        if (left + width > parentWidth) {
+            left = value[0] - width - 15
         }
         this.element.style.left = `${left}px`
-        this.element.style.top = `${value[1]}px`
+        this.element.style.top = `${top}px`
     }
 
     public setContent(content: ITeletipContent) {
