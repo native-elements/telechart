@@ -15,6 +15,9 @@ export class StackedPercentChartDrawer extends StackedChartDrawer {
             }
             colsValues.push({ col, values: this.getInDisplayColumnValues(col, [borders.minX, borders.maxX]) })
         }
+        if (!colsValues.length) {
+            return
+        }
         for (let n = colsValues[0].values.length - 1; n >= 0; n--) {
             const sum = colsValues.reduce((r, v) => r + v.values[n].y * v.col.opacity.value, 0)
             for (const colVals of colsValues) {
