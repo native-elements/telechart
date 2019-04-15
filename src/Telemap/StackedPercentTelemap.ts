@@ -6,7 +6,7 @@ export class StackedPercentTelemap extends StackedTelemap {
 
     constructor(telechart: Telechart) {
         super(telechart)
-        this.drawers.push(new StackedPercentChartDrawer(telechart, { noGuides: true, noMilestones: true }))
+        this.drawers.push(new StackedPercentChartDrawer(telechart, { noGuides: true, noMilestones: true, topPadding: this.topPadding, bottomPadding: this.bottomPadding }))
     }
 
 }
