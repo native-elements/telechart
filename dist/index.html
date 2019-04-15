@@ -16,33 +16,41 @@
             background: #242f3e;
             color: #fff;
         }
-        h1 {
-            
-        }
         #themeSwitch {
             background: #fff;
             position: fixed;
             font-size: 22px;
             left: 0;
-            bottom: 0;
+            bottom: 30px;
             right: 0;
             color: #108be3;
             text-align: center;
-            padding: 34px 0;
+            padding: 15px 0;
             cursor: pointer;
+            border-top: #77777710 1px solid;
         }
         body.dark #themeSwitch {
-            background: #293241;
+            background: #242f3e;
         }
         .telechart {
             margin-bottom: 50px;
         }
         .sourceLink {
+            background: #fff;
             text-align: center;
             font-size: 10px;
-        }
-        .sourceLink a {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            line-height: 28px;
+            height: 30px;
+            box-sizing: border-box;
+            border-top: #77777710 1px solid;
             color: #999;
+        }
+        body.dark .sourceLink {
+            background: #242f3e;
         }
         @media (min-width: 500px) {
             #telechartDiv {
@@ -66,7 +74,8 @@
     </div>
     <div id="telechartDiv"></div>
     
-    <div class="sourceLink"><a href="sources.tar.gz">Download sources</a></div>
+    <a class="sourceLink" href="sources.tar.gz">Download sources</a>
+    <div id=themeSwitch onclick="switchTheme()">Switch to Night Mode</div>
     <script src="telechart.min.js?12"></script>
     <script>
         window.getData = function(url, callback) {
@@ -100,6 +109,5 @@
             document.getElementById('themeSwitch').innerText = theme === 'light' ? 'Switch to Night Mode' : 'Back to Light Mode'
         }
     </script>
-    <div id=themeSwitch onclick="switchTheme()">Switch to Night Mode</div>
 </body>
 </html>
