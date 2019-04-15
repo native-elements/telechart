@@ -1,13 +1,13 @@
-import { SimpleChartDrawer, ISimpleChartDrawerOptions } from './SimpleChartDrawer'
 import { Telecolumn } from '../Telecolumn'
 import { Telemation } from '../Telemation'
 import { Telechart } from '../Telechart'
+import { AbstractChartDrawer, IAbstractChartDrawerOptions } from './AbstractChartDrawer'
 
-interface IStackedChartDrawerOptions extends ISimpleChartDrawerOptions {
+interface IStackedChartDrawerOptions extends IAbstractChartDrawerOptions {
     noCurrent?: boolean
 }
 
-export class StackedChartDrawer extends SimpleChartDrawer {
+export class StackedChartDrawer extends AbstractChartDrawer {
     public valuesLength = 0
     public noCurrent: boolean
 

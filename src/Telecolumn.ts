@@ -14,7 +14,6 @@ export class Telecolumn {
     public readonly color: string
     public readonly values: Array<{ x: number, y: number}>
     public opacity: Telemation
-    public width = 2
     public current: { x: number, y: number }|null = null
     public config!: { background: string }
     private visibleProperty = true

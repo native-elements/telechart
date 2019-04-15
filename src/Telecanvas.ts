@@ -20,12 +20,12 @@ export class Telecanvas {
             document.body.appendChild(this.canvas)
             this.canvas.style.display = 'none'
         }
-        this.canvas.height = height * this.dpr
-        this.canvas.style.height = `${height}px`
         this.context = this.canvas.getContext('2d')!
         if (!width) {
             window.addEventListener('resize', () => {
                 if (this.width !== (width ? width : parentElement!.clientWidth)) {
+                    this.canvas.height = height * this.dpr
+                    this.canvas.style.height = `${height}px`
                     this.width = width ? width : parentElement!.clientWidth
                     this.resizeListeners.forEach(l => l())
                 }
@@ -207,6 +207,15 @@ export class Telecanvas {
         if (this.dpr > 1) {
             this.context.scale(this.dpr, this.dpr)
         }
+    }
+
+    public getOpacityValue(color: string) {
+        return color.length === 9 ? parseInt(color.substr(7, 2), 16) / 255 : 1
+    }
+
+    public getColorString(baseColor: string, opacity: number) {
+        const opacityPart = Math.round(this.getOpacityValue(baseColor) * opacity * 255).toString(16)
+        return baseColor.substr(0, 7) + (opacityPart.length === 1 ? '0' + opacityPart : opacityPart)
     }
 
     public clear() {

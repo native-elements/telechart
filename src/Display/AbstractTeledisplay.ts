@@ -1,6 +1,7 @@
 import { Telecolumn } from '../Telecolumn'
 import { Telechart } from '../Telechart'
 import { AbstractChartDrawer } from '../Drawer/AbstractChartDrawer'
+import { ITeletipContent } from '../Teletip'
 
 export abstract class AbstractTeledisplay {
     public theme: 'light'|'dark' = 'light'
@@ -13,6 +14,18 @@ export abstract class AbstractTeledisplay {
     }
 
     public abstract draw(): void
+
+    get axisColor() {
+        return this.theme === 'dark' ? '#FFFFFF19' : '#182D3B19'
+    }
+
+    get axisTextColor() {
+        return this.theme === 'dark' ? '#A3B1C2' : '#8E8E93'
+    }
+
+    get lineColor() {
+        return this.theme === 'dark' ? '#3b4a5a' : '#dfe6eb'
+    }
 
     get firstDrawer() {
         return this.drawers.length ? this.drawers[0] : undefined
@@ -40,19 +53,23 @@ export abstract class AbstractTeledisplay {
         this.telechart.redraw()
     }
 
-    protected updateTeletip() {
-        const curColummns = this.columns.filter(col => col.currentPoint)
-        const columns = curColummns.map(col => {
-            return { name: col.name, color: col.color, value: col.currentPoint!.y }
+    protected getTeletipContent(currentColumns: Telecolumn[]): ITeletipContent {
+        const values = currentColumns.map(col => {
+            return { name: col.name, color: col.color, value: this.telechart.formatNumber(col.currentPoint!.y) }
         })
-        if (columns.length) {
-            const pos = this.firstDrawer!.getCanvasX(curColummns[0]!.currentPoint!.x)
+
+        return { title: this.telechart.getDateString(currentColumns[0]!.currentPoint!.x, 'D, j M Y'), values }
+    }
+
+    protected updateTeletip() {
+        const curColumns = this.columns.filter(col => col.currentPoint)
+        if (curColumns.length) {
+            const pos = this.firstDrawer!.getCanvasX(curColumns[0]!.currentPoint!.x)
             if (pos < 0 || pos > this.telecanvas.width) {
                 this.telechart.teletip.hide()
             } else {
-                const date = new Date(curColummns[0]!.currentPoint!.x)
-                this.telechart.teletip.setContent({ title: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }), values: columns })
-                this.telechart.teletip.setCoordinates([this.firstDrawer!.getCanvasX(curColummns[0]!.currentPoint!.x), 0])
+                this.telechart.teletip.setContent(this.getTeletipContent(curColumns))
+                this.telechart.teletip.setCoordinates([this.firstDrawer!.getCanvasX(curColumns[0]!.currentPoint!.x), 0])
                 this.telechart.teletip.show()
             }
         } else {

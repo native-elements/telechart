@@ -1,9 +1,9 @@
 import { AbstractTeledisplay } from './AbstractTeledisplay'
 import { Telechart } from '../Telechart'
-import { SimpleChartDrawer } from '../Drawer/SimpleChartDrawer'
 import { Telecolumn } from '../Telecolumn'
 import { StackedChartDrawer } from '../Drawer/StackedChartDrawer'
 import { StackedPercentChartDrawer } from '../Drawer/StackedPercentChartDrawer'
+import { ITeletipContent } from '../Teletip'
 
 export class StackedPercentTeledisplay extends AbstractTeledisplay {
     protected drawers: StackedChartDrawer[] = []
@@ -22,17 +22,31 @@ export class StackedPercentTeledisplay extends AbstractTeledisplay {
         if (!this.firstDrawer) {
             return
         }
-        const axisColor = this.theme === 'dark' ? '#293544' : '#ecf0f3'
-        const textColor = this.theme === 'dark' ? '#546778' : '#96a2aa'
-        const lineColor = this.theme === 'dark' ? '#3b4a5a' : '#dfe6eb'
-        for (const drawer of this.drawers as SimpleChartDrawer[]) {
+        const textColor = this.theme === 'dark' ? '#ECF2F87F' : '#2525297F'
+        const c = this.telecanvas
+        c.text('100%', [0, this.firstDrawer.topPadding - 6], textColor, undefined, 11)
+        for (const drawer of this.drawers as StackedPercentChartDrawer[]) {
             drawer.topPadding = 30
             drawer.bottomPadding = 40 + this.telechart.telemap.height
-            drawer.drawMilestones(textColor)
+            drawer.drawMilestones(this.axisTextColor)
             drawer.drawColumns()
-            drawer.drawGuides(axisColor, textColor)
-            drawer.drawCurrentLine(lineColor)
+            drawer.drawGuides(this.axisColor, textColor, undefined, (label) => label + '%')
+            drawer.drawCurrentLine(this.theme === 'dark' ? '#dfe6eb7F' : '#3b4a5a7F')
         }
         this.updateTeletip()
     }
+
+    protected getTeletipContent(currentColumns: Telecolumn[]): ITeletipContent {
+        const sum = currentColumns.reduce((r, v) => r + v.currentPoint!.y, 0)
+        const values = currentColumns.map(col => {
+            return {
+                name: col.name,
+                color: col.color,
+                value: this.telechart.formatNumber(col.currentPoint!.y),
+                percentage: Math.round(col.currentPoint!.y / sum * 100),
+            }
+        })
+        return { title: this.telechart.getDateString(currentColumns[0]!.currentPoint!.x, 'D, j M Y'), values }
+    }
+
 }

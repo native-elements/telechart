@@ -1,5 +1,10 @@
 import { Telechart } from './Telechart'
 
+export interface ITeletipContent {
+    title: string,
+    values: Array<{ name: string, color: string, value: number|string, percentage?: number|string }>,
+}
+
 export class Teletip {
     protected readonly element: HTMLDivElement
     private themeProperty: 'light'|'dark' = 'light'
@@ -45,27 +50,30 @@ export class Teletip {
         this.element.style.top = `${value[1]}px`
     }
 
-    public setContent(content: { title: string, values: Array<{ name: string, color: string, value: number }> }) {
-        const titleDiv = document.createElement('div')
-        titleDiv.classList.add('telechart-tip-title')
-        titleDiv.innerText = content.title
-        this.element.innerHTML = ''
-        this.element.appendChild(titleDiv)
+    public setContent(content: ITeletipContent) {
+        while (this.element.firstChild) {
+            this.element.removeChild(this.element.firstChild);
+        }
+        const table = this.element.appendChild(document.createElement('table'))
+        const titleRow = table.insertRow()
+        const titleCell = titleRow.insertCell()
+        titleCell.innerText = content.title
+        titleCell.colSpan = content.values[0].percentage ? 3 : 2
 
         content.values.forEach(val => {
-            const div = document.createElement('div')
-            div.classList.add('telechart-tip-value')
-            div.style.color = val.color
-
-            const b = document.createElement('b')
-            b.innerText = String(val.value)
-            div.appendChild(b)
-
-            const s = document.createElement('span')
-            s.innerText = val.name
-            div.appendChild(s)
-
-            this.element.appendChild(div)
+            const row = table.insertRow()
+            if (val.percentage) {
+                const perc = row.insertCell()
+                perc.style.textAlign = 'right'
+                perc.innerHTML = '<b>' + val.percentage + '%</b>'
+            }
+            const name = row.insertCell()
+            const value = row.insertCell()
+            name.innerText = val.name
+            value.innerText = String(val.value)
+            value.style.color = val.color
+            value.style.fontWeight = 'bold'
+            value.style.textAlign = 'right'
         })
     }
 

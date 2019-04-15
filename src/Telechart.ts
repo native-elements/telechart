@@ -4,9 +4,9 @@ import { AbstractTeledisplay } from './Display/AbstractTeledisplay'
 import { Teletip } from './Teletip'
 import { AbstractTelemap } from './Telemap/AbstractTelemap'
 import { Telegend } from './Telegend'
-import { SimpleTeledisplay } from './Display/SimpleTeledisplay'
+import { LineTeledisplay } from './Display/LineTeledisplay'
 import { TwoAxisTeledisplay } from './Display/TwoAxisTeledisplay'
-import { SimpleTelemap } from './Telemap/SimpleTelemap'
+import { LineTelemap } from './Telemap/LineTelemap'
 import { TwoAxisTelemap } from './Telemap/TwoAxisTelemap'
 import { StackedTeledisplay } from './Display/StackedTeledisplay'
 import { StackedTelemap } from './Telemap/StackedTelemap'
@@ -25,6 +25,7 @@ interface ITelechartData {
 interface ITelechartOptions {
     data: ITelechartData
     height?: number
+    title?: string
 }
 
 export class Telechart {
@@ -47,10 +48,17 @@ export class Telechart {
     public teletip!: Teletip
     public telemap!: AbstractTelemap
     public telegend!: Telegend
-    protected config!: ITelechartOptions
+    protected config!: {
+        data: ITelechartData,
+        height: number,
+        title: string,
+    }
+    protected loaded = false
     protected columns: Telecolumn[] = []
     protected canvas!: HTMLCanvasElement
     protected needRedraw = false
+    protected headingElement!: HTMLDivElement
+    protected rangeElement?: HTMLDivElement
     private themeProperty: 'light'|'dark' = 'light'
 
     constructor(protected readonly element: HTMLElement, options: ITelechartOptions) {
@@ -62,7 +70,8 @@ export class Telechart {
         }
         this.config = {
             data: options.data,
-            height: options.height ? options.height : 340,
+            height: options.height ? options.height : 400,
+            title: options.title ? options.title : 'Untitled chart',
         }
         this.initHTML()
         this.updateData(options.data ? options.data : { columns: [], types: {}, names: {}, colors: {}, y_scaled: false })
@@ -90,6 +99,14 @@ export class Telechart {
         this.telegend.theme = value
         this.columns.forEach(c => c.theme = value)
         this.redraw()
+    }
+
+    public setRangeText(value: string) {
+        if (!this.rangeElement) {
+            this.rangeElement = this.headingElement.appendChild(document.createElement('div'))
+            this.rangeElement.classList.add('telechart-heading-range')
+        }
+        this.rangeElement.innerText = value
     }
 
     public addColumn(data: ITelechartColumnData) {
@@ -156,8 +173,8 @@ export class Telechart {
             this.teledisplay = new TwoAxisTeledisplay(this)
             this.telemap = new TwoAxisTelemap(this)
         } else {
-            this.teledisplay = new SimpleTeledisplay(this)
-            this.telemap = new SimpleTelemap(this)
+            this.teledisplay = new LineTeledisplay(this)
+            this.telemap = new LineTelemap(this)
         }
         for (const col of data.columns) {
             const id = col[0] as string
@@ -179,17 +196,52 @@ export class Telechart {
             }, [] as Array<{ x: number, y: number}>)
             this.addColumn({ id, name: data.names[id], color: data.colors[id], values })
         }
+        this.telemap.range = { from: .8, to: 1 }
+        this.loaded = true
         window.dispatchEvent(new Event('resize'))
+    }
+
+    public getDateString(timestamp: number, format: string = 'j F Y') {
+        const date = new Date(timestamp)
+        let result = ''
+        for (const c of format.split('')) {
+            let a = c
+            if (c === 'j') {
+                a = date.getDate().toString()
+            } else if (c === 'F') {
+                a = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][date.getMonth()]
+            } else if (c === 'Y') {
+                a = date.getFullYear().toString()
+            } else if (c === 'M') {
+                a = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()]
+            } else if (c === 'D') {
+                a = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()]
+            }
+            result += a
+        }
+        return result
+    }
+
+    public formatNumber(value: number): string {
+        let result = ''
+        value.toString(10).split('').reverse().forEach((n, i) => {
+            if (i % 3 === 0) {
+                result = ' ' + result
+            }
+            result = n + result
+        })
+        return result
     }
 
     protected initHTML() {
         this.element.classList.add('telechart')
-        this.element.style.fontFamily = 'sans-serif'
-        this.element.style.userSelect = 'none'
-        this.element.style.webkitTapHighlightColor = '#ffffff00'
+        const heading = this.headingElement = this.element.appendChild(document.createElement('div'))
+        heading.classList.add('telechart-heading')
+        const title = heading.appendChild(document.createElement('div'))
+        title.classList.add('telechart-heading-title')
+        title.innerText = this.config.title
 
         this.telecanvas = new Telecanvas(this.element, this.config.height!)
-
         this.teletip = new Teletip(this, this.element)
         this.telegend = new Telegend(this, this.element)
 
@@ -218,6 +270,9 @@ export class Telechart {
     }
 
     protected draw() {
+        if (!this.loaded) {
+            return
+        }
         this.needRedraw = false
         this.telecanvas.clear()
         this.telemap.draw()

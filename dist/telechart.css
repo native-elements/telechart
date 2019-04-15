@@ -1,5 +1,29 @@
 .telechart {
     position: relative;
+    font-family: sans-serif;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.telechart-heading {
+    margin-bottom: 10px;
+    display: flex;
+    position: relative
+}
+.telechart-heading-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+.telechart-heading-range {
+    font-size: 14px;
+    font-weight: bold;
+    position: absolute;
+    right: 0;
+    top: 4px;
+    opacity: 1;
+    transition: opacity .1s;
+}
+.telechart-heading-range.blink {
+    opacity: .5;
 }
 .telechart-tip {
     background: #fff;
@@ -8,33 +32,29 @@
     box-shadow: 1px 1px 4px rgba(0, 0, 0, .1);
     border-radius: 10px;
     transition: .1s;
-    padding: 7px 12px;
+    padding: 7px 9px;
     white-space: nowrap;
     font-size: 13px;
     color: #222;
+    min-width: 130px;
 }
 .telechart-tip.dark {
-    background: #253241;
+    background: #222836;
     border-color: #202a37;
     color: #fff;
 }
-.telechart-tip-title {
-    margin-bottom: 12px;
+.telechart-tip table {
+    width: 100%;
 }
-.telechart-tip-value {
-    display: inline-block;
-    margin-right: 10px;
+.telechart-tip table td {
+    padding: 0 3px;
 }
-.telechart-tip-value b {
-    display: block;
-    font-size: 1.2em;
-    line-height: .95em;
-}
-.telechart-tip-value span {
-    font-size: .85em;
+.telechart-tip table tr:first-child td {
+    column-span: 2;
+    font-weight: bold;
 }
 .telegend {
-    padding-top: 10px;
+    padding-top: 16px;
 }
 .telegend-telement {
     display: inline-block;
@@ -42,11 +62,12 @@
     border-radius: 100px;
     padding: 8px 18px 10px;
     cursor: pointer;
-    margin: 2px 6px 0 0;
+    margin: 6px 6px 0 0;
     box-sizing: border-box;
     position: relative;
     font-weight: bold;
     border: 2px solid;
+    line-height: 15px;
 }
 .telegend-telement.visible {
     color: #fff !important;
@@ -70,25 +91,26 @@
 }   
 .telegend-element-checkbox {
     display: inline-block;
-    border: 0;
     margin-left: -6px;
-    margin-right: 6px;
+    margin-right: -9px;
     position: relative;
-    width: 0;
-    top: -2px;
+    width: 12px;
+    height: 5px;
+    top: -3px;
     opacity: 0;
-    transform: rotate(45deg);
-    transition: transform 2s, width .3s, opacity .3s;
+    border-bottom: 2.5px solid #fff;
+    border-left: 2.5px solid #fff;
+    transform: rotate(0deg);
+    transition: transform .6s, width .3s, margin .3s, opacity .3s;
 }
 .telegend-telement.visible .telegend-element-checkbox {
     opacity: 1;
     width: 12px;
     height: 5px;
     transform: rotate(-45deg);
-    border-bottom: 2.5px solid #fff;
-    border-left: 2.5px solid #fff;
+    margin-right: 6px;
 }
 .telegend-element-label {
     display: inline-block;
-    vertical-align: middle;
+    vertical-align: top;
 }

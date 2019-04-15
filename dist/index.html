@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Telechart Example</title>
-    <link rel="stylesheet" type="text/css" href="telechart.css?2" />
+    <link rel="stylesheet" type="text/css" href="telechart.css?3" />
     <style>
         body {
             margin: 12px;
@@ -17,8 +17,7 @@
             color: #fff;
         }
         h1 {
-            margin-top: 0;
-            font-size: 20px;
+            
         }
         #themeSwitch {
             background: #fff;
@@ -33,7 +32,7 @@
             cursor: pointer;
         }
         body.dark #themeSwitch {
-            background: #242f3e;
+            background: #293241;
         }
         .telechart {
             margin-bottom: 50px;
@@ -56,7 +55,7 @@
                 flex-grow: 1;
                 flex-shrink: 1;
                 flex-basis: 50%;
-                margin: 0 20px;
+                margin: 0 20px 50px;
             }
         }
     </style>
@@ -68,7 +67,7 @@
     <div id="telechartDiv"></div>
     
     <div class="sourceLink"><a href="./sources.tar.gz">Download sources</a></div>
-    <script src="telechart.min.js?7"></script>
+    <script src="telechart.min.js?8"></script>
     <script>
         window.getData = function(url, callback) {
             var request = new XMLHttpRequest();
@@ -86,13 +85,13 @@
         for (var n = 0; n < dataUrls.length; n++) {
             var chart = document.createElement('div')
             chart.classList.add('chart')
-            chart.innerHTML = '<h1>Chart #' + n + '</h1><div class="chartWrp" id="chart' + n + '"></div>'
+            chart.id = 'chart' + n
             document.getElementById('telechartDiv').appendChild(chart)
-            !function(n) {
+            !function(n, chart) {
                     getData(dataUrls[n], function(data) {
-                    telecharts.push(Telechart.init(document.getElementById('chart' + n), { data }))
+                    telecharts.push(Telechart.init(chart, { data, title: 'Chart #' + n }))
                 })
-            }(n)
+            }(n, chart)
         }
         function switchTheme() {
             var theme = document.body.classList.contains('dark') ? 'light' : 'dark'

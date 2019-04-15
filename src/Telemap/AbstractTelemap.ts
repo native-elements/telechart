@@ -15,11 +15,11 @@ export abstract class AbstractTelemap {
     protected drawers: AbstractChartDrawer[] = []
     private themeProperty: 'light'|'dark' = 'light'
 
-    constructor(protected readonly telechart: Telechart, public height = 38) {
+    constructor(protected readonly telechart: Telechart, public height = 44) {
         this.theme = telechart.theme
         this.topPadding = this.telecanvas.height - height
         this.initHTML()
-        this.cacheTeelcanvas = new Telecanvas(null, this.height, this.telecanvas.width)
+        this.cacheTeelcanvas = new Telecanvas(null, this.height - 2, this.telecanvas.width)
         this.telecanvas.addResizeListener(() => {
             this.cacheTeelcanvas.width = this.telecanvas.width
             this.telecanvasCached = false
@@ -36,7 +36,6 @@ export abstract class AbstractTelemap {
 
     public addColumn(column: Telecolumn) {
         this.columns.push(column)
-        this.range = { from: .8, to: 1 }
     }
 
     public removeColumn(column: Telecolumn) {
@@ -53,16 +52,16 @@ export abstract class AbstractTelemap {
         if (value === 'dark') {
             this.config = {
                 ...this.config,
-                rangeBackground: '#40566b',
+                rangeBackground: '#56626D',
                 rangeFill: '#242f3e',
-                shadow: '#1f2a38cc',
+                shadow: '#30425999',
             }
         } else {
             this.config = {
                 ...this.config,
-                rangeBackground: '#c0d1e1',
+                rangeBackground: '#C0D1E1',
                 rangeFill: '#fff',
-                shadow: '#e7f3fb99',
+                shadow: '#E2EEF999',
             }
         }
     }
@@ -76,11 +75,15 @@ export abstract class AbstractTelemap {
         if (!this.firstDrawer) {
             return
         }
-        this.columns.forEach(c => c.setCurrentRange(
-            this.firstDrawer!.borders.minX.to + (this.firstDrawer!.borders.maxX.to - this.firstDrawer!.borders.minX.to) * value!.from,
-            this.firstDrawer!.borders.minX.to + (this.firstDrawer!.borders.maxX.to - this.firstDrawer!.borders.minX.to) * value!.to,
-        ))
-        this.telechart.teledisplay.recalcBorders(200)
+        this.columns.forEach((c, index) => {
+            const from = this.firstDrawer!.borders.minX.to + (this.firstDrawer!.borders.maxX.to - this.firstDrawer!.borders.minX.to) * value!.from
+            const to = this.firstDrawer!.borders.minX.to + (this.firstDrawer!.borders.maxX.to - this.firstDrawer!.borders.minX.to) * value!.to
+            if (!index) {
+                this.telechart.setRangeText(this.telechart.getDateString(from) + ' - ' + this.telechart.getDateString(to))
+            }
+            c.setCurrentRange(from, to)
+        })
+        this.telechart.teledisplay.recalcBorders(current ? 200 : 0)
     }
 
     get range(): { from: number, to: number }|null {
@@ -89,8 +92,8 @@ export abstract class AbstractTelemap {
 
     public draw() {
         const c = this.telecanvas
-        const left = this.rangeProperty!.from.value * this.telecanvas.width
-        const width = (this.rangeProperty!.to.value - this.rangeProperty!.from.value) * this.telecanvas.width
+        const left = this.range!.from * this.telecanvas.width
+        const width = (this.range!.to - this.range!.from) * this.telecanvas.width
 
         if (this.columns.reduce((r, col) => !col.opacity.finished || r, false) || !this.firstDrawer!.borders.maxY.finished) {
             this.telecanvasCached = false
@@ -98,28 +101,29 @@ export abstract class AbstractTelemap {
         if (!this.telecanvasCached) {
             this.cacheTeelcanvas.clear()
             this.drawColumns()
-            this.cacheTeelcanvas.drawTelecanvas(this.telecanvas, 0, -this.topPadding)
+            this.cacheTeelcanvas.drawTelecanvas(this.telecanvas, 0, -this.topPadding - 1)
             this.telecanvasCached = true
             c.clear()
         }
         c.save()
-        c.setRoundedClippingRect(0, this.topPadding, c.width, this.height, 6)
-        c.drawTelecanvas(this.cacheTeelcanvas, 0, this.topPadding)
+        c.setRoundedClippingRect(0, this.topPadding + 1, c.width, this.height - 2, 6)
+        c.drawTelecanvas(this.cacheTeelcanvas, 0, this.topPadding + 1)
 
-        c.rect(0, this.topPadding, left + 6, this.height, this.config.shadow) // Shadow to left
-        c.rect(left + width - 6, this.topPadding, this.telecanvas.width - left - width + 6, this.height, this.config.shadow) // Shadow to right
+        c.rect(0, this.topPadding + 1, left + 6, this.height - 2, this.config.shadow) // Shadow to left
+        c.rect(left + width - 6, this.topPadding + 1, this.telecanvas.width - left - width + 6, this.height - 2, this.config.shadow) // Shadow to right
+
+        c.restore()
 
         c.roundedRect(left, this.topPadding, 10, this.height, 6, this.config.rangeBackground) // Left gripper corners
         c.rect(left + 5, this.topPadding, 5, this.height, this.config.rangeBackground) // Left gripper rect
-        c.roundedRect(left + 4, this.topPadding + 13, 2, 12, 2, this.config.rangeFill) // Left gripper strip
+        c.roundedRect(left + 4, this.topPadding + 15, 2, 12, 2, this.config.rangeFill) // Left gripper strip
 
         c.roundedRect(left + width - 10, this.topPadding, 10, this.height, 6, this.config.rangeBackground) // Right gripper corners
         c.rect(left + width - 10, this.topPadding, 5, this.height, this.config.rangeBackground) // Right gripper rect
-        c.roundedRect(left + width - 6, this.topPadding + 13, 2, 12, 2, this.config.rangeFill) // Right gripper strip
+        c.roundedRect(left + width - 6, this.topPadding + 15, 2, 12, 2, this.config.rangeFill) // Right gripper strip
 
         c.line([left + 10 - 1, this.topPadding], [left + width - 10 + 1, this.topPadding], this.config.rangeBackground)
         c.line([left + 10 - 1, this.topPadding + this.height - 1], [left + width - 10 + 1, this.topPadding + this.height - 1], this.config.rangeBackground)
-        c.restore()
 
         if (!this.rangeProperty!.to.finished) {
             this.telechart.redraw()

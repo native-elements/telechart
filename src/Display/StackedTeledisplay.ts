@@ -1,6 +1,5 @@
 import { AbstractTeledisplay } from './AbstractTeledisplay'
 import { Telechart } from '../Telechart'
-import { SimpleChartDrawer } from '../Drawer/SimpleChartDrawer'
 import { Telecolumn } from '../Telecolumn'
 import { StackedChartDrawer } from '../Drawer/StackedChartDrawer'
 
@@ -21,14 +20,12 @@ export class StackedTeledisplay extends AbstractTeledisplay {
         if (!this.firstDrawer) {
             return
         }
-        const axisColor = this.theme === 'dark' ? '#293544' : '#ecf0f3'
-        const textColor = this.theme === 'dark' ? '#546778' : '#96a2aa'
-        for (const drawer of this.drawers as SimpleChartDrawer[]) {
+        for (const drawer of this.drawers as StackedChartDrawer[]) {
             drawer.topPadding = 30
             drawer.bottomPadding = 40 + this.telechart.telemap.height
-            drawer.drawMilestones(textColor)
+            drawer.drawMilestones(this.axisTextColor)
             drawer.drawColumns()
-            drawer.drawGuides(axisColor, textColor)
+            drawer.drawGuides(this.axisColor, this.theme === 'dark' ? '#ECF2F87F' : '#2525297F')
         }
         this.updateTeletip()
     }
