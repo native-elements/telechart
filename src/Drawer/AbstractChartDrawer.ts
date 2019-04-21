@@ -224,7 +224,7 @@ export abstract class AbstractChartDrawer {
         }
         for (let n = 0; n < this.guidesCount; n++) {
             const y = this.getYValue(c.height - this.bottomPadding - (c.height - this.bottomPadding - this.topPadding) / this.guidesCount * n)
-            let value = y - y % Math.pow(10, y.toString().length - 2)
+            let value = Math.round(y - y % Math.pow(10, y.toString().length - 2))
             let modifier = ''
             const diff = this.borders.maxY.to - this.borders.minY.to
             if (diff > 5000000) {

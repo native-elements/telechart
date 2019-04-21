@@ -5,15 +5,18 @@ import { AbstractChartDrawer, IAbstractChartDrawerOptions } from './AbstractChar
 
 interface IStackedChartDrawerOptions extends IAbstractChartDrawerOptions {
     noCurrent?: boolean
+    rectangle?: boolean
 }
 
 export class StackedChartDrawer extends AbstractChartDrawer {
     public valuesLength = 0
     public noCurrent: boolean
+    public rectangle: boolean
 
     constructor(telechart: Telechart, options?: IStackedChartDrawerOptions) {
         super(telechart, options)
         this.noCurrent = options && options.noCurrent ? true : false
+        this.rectangle = options && options.rectangle ? true : false
     }
 
     get currentPoint() {
@@ -26,7 +29,14 @@ export class StackedChartDrawer extends AbstractChartDrawer {
         let prev: number[]|undefined
         const borders = { minX: this.borders.minX.value, maxX: this.borders.maxX.value, minY: 0, maxY: this.borders.maxY.value }
         for (const col of this.columns) {
-            const result = this.drawColumn(col, prev, borders)
+            let result
+            if (this.rectangle) {
+                result = this.drawColumn(col, prev, borders)
+            } else {
+                result = this.drawValues(col, this.getInDisplayColumnValues(col, [borders.minX, borders.maxX]),
+                    [borders.minX, borders.maxX], prev,
+                )
+            }
             if (result && !prev) {
                 prev = result
             } else if (result) {
@@ -92,6 +102,40 @@ export class StackedChartDrawer extends AbstractChartDrawer {
             if (current) {
                 c.shape(current, column.color)
             }
+            if (!column.opacity.finished) {
+                this.telechart.redraw()
+            }
+            return result
+        }
+    }
+
+    public drawValues(column: Telecolumn, values: Array<{ x: number, y: number }>, borders: [number, number], prev?: number[]) {
+        const c = this.telecanvas
+        if (values.length) {
+            const colOpacityVal = column.opacity.value
+            const result: number[] = []
+            const path: Array<[number, number]> = []
+            const valsPrep: Array<{ x: number, y: number, height: number }> = []
+            this.valuesLength = values.length
+            for (let n = 0; n < values.length; n++) {
+                const x = this.getCanvasX(values[n].x, borders)
+                const ySt = this.getCanvasY(0)
+                let height = ySt - this.getCanvasY(values[n].y)
+                if (colOpacityVal < 1) {
+                    height *= colOpacityVal
+                }
+                const y = ySt - height - (prev ? prev[n] : 0)
+                if (colOpacityVal === 1 && height < 2) {
+                    height = 2
+                }
+                path.push([x, y])
+                valsPrep.push({ x, y, height })
+                result.push(height)
+            }
+            for (let n = valsPrep.length - 1; n >= 0; n--) {
+                path.push([path[n][0], valsPrep[n].y + valsPrep[n].height])
+            }
+            c.shape(path, column.color)
             if (!column.opacity.finished) {
                 this.telechart.redraw()
             }

@@ -39,40 +39,6 @@ export class StackedPercentChartDrawer extends StackedChartDrawer {
         }
     }
 
-    public drawValues(column: Telecolumn, values: Array<{ x: number, y: number }>, borders: [number, number], prev?: number[]) {
-        const c = this.telecanvas
-        if (values.length) {
-            const colOpacityVal = column.opacity.value
-            const result: number[] = []
-            const path: Array<[number, number]> = []
-            const valsPrep: Array<{ x: number, y: number, height: number }> = []
-            this.valuesLength = values.length
-            for (let n = 0; n < values.length; n++) {
-                const x = this.getCanvasX(values[n].x, borders)
-                const ySt = this.getCanvasY(0)
-                let height = ySt - this.getCanvasY(values[n].y)
-                if (colOpacityVal < 1) {
-                    height *= colOpacityVal
-                }
-                const y = ySt - height - (prev ? prev[n] : 0)
-                if (colOpacityVal === 1 && height < 2) {
-                    height = 2
-                }
-                path.push([x, y])
-                valsPrep.push({ x, y, height })
-                result.push(height)
-            }
-            for (let n = valsPrep.length - 1; n >= 0; n--) {
-                path.push([path[n][0], valsPrep[n].y + valsPrep[n].height])
-            }
-            c.shape(path, column.color)
-            if (!column.opacity.finished) {
-                this.telechart.redraw()
-            }
-            return result
-        }
-    }
-
     protected getNewBorders(duration?: number) {
         const result = {
             minX: Math.min(...this.columns.filter(c => c.visible).map(c => c.getMinX(this.isRangeDisplay))),

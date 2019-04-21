@@ -3,12 +3,23 @@ import { Telechart } from '../Telechart'
 import { Telecolumn } from '../Telecolumn'
 import { StackedChartDrawer } from '../Drawer/StackedChartDrawer'
 
+interface IStackedTeledisplayOptions {
+    rectangle?: boolean
+}
+
 export class StackedTeledisplay extends AbstractTeledisplay {
     protected drawers: StackedChartDrawer[] = []
+    protected rectangle: boolean
 
-    constructor(telechart: Telechart) {
+    constructor(telechart: Telechart, options?: IStackedTeledisplayOptions) {
         super(telechart)
-        this.drawers.push(new StackedChartDrawer(telechart, { isRangeDisplay: true, topPadding: 15, bottomPadding: 40 + this.telechart.telemap.height }))
+        this.rectangle = options && options.rectangle ? true : false
+        this.drawers.push(new StackedChartDrawer(telechart, {
+            isRangeDisplay: true,
+            topPadding: 15,
+            bottomPadding: 40 + this.telechart.telemap.height,
+            rectangle: this.rectangle,
+        }))
     }
 
     public addColumn(column: Telecolumn) {
@@ -24,6 +35,9 @@ export class StackedTeledisplay extends AbstractTeledisplay {
             drawer.drawMilestones(this.axisTextColor)
             drawer.drawColumns()
             drawer.drawGuides(this.axisColor, this.theme === 'dark' ? '#ECF2F87F' : '#2525297F')
+            if (!this.rectangle) {
+                drawer.drawCurrentLine(this.theme === 'dark' ? '#dfe6eb7F' : '#3b4a5a7F')
+            }
         }
         this.updateTeletip()
     }

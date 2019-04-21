@@ -98,7 +98,7 @@
             document.getElementById('telechartDiv').appendChild(chart)
             !function(n, chart) {
                     getData(dataUrls[n], function(data) {
-                    telecharts.push(Telechart.init(chart, { data, title: 'Chart #' + n }))
+                    telecharts.push(Telechart.init(chart, { data, title: 'Chart #' + n, allRange: true }))
                 })
             }(n, chart)
         }

@@ -27,6 +27,7 @@ interface ITelechartOptions {
     height?: number
     title?: string
     showFps?: boolean
+    allRange?: boolean
 }
 
 export class Telechart {
@@ -54,6 +55,7 @@ export class Telechart {
         height: number,
         title: string,
         showFps: boolean,
+        allRange: boolean,
     }
     protected loaded = false
     protected columns: Telecolumn[] = []
@@ -75,6 +77,7 @@ export class Telechart {
             height: options.height ? options.height : 360,
             title: options.title ? options.title : 'Untitled chart',
             showFps: options.showFps ? true : false,
+            allRange: options.allRange ? true : false,
         }
         this.initHTML()
         this.updateData(options.data ? options.data : { columns: [], types: {}, names: {}, colors: {}, y_scaled: false })
@@ -199,7 +202,7 @@ export class Telechart {
             }, [] as Array<{ x: number, y: number}>)
             this.addColumn({ id, name: data.names[id], color: data.colors[id], values })
         }
-        this.telemap.range = { from: .8, to: 1 }
+        this.telemap.range = this.config.allRange ? { from: 0, to: 1 } : { from: .8, to: 1 }
         this.loaded = true
         window.dispatchEvent(new Event('resize'))
     }
