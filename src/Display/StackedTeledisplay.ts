@@ -43,6 +43,10 @@ export class StackedTeledisplay extends AbstractTeledisplay {
     }
 
     protected onMouseMove(x: number, y: number) {
+        if (!this.rectangle) {
+            super.onMouseMove(x, y)
+            return
+        }
         if (!this.drawers.length || !this.firstDrawer || !this.firstDrawer.bordersAnimationFinished) {
             return
         }
